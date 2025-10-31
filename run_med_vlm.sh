@@ -16,4 +16,6 @@ python3 -m pip install transformers
 
 python3 -m pip install qwen_vl_utils
 
+python3 -m pip install accelerate
+
 conda run -n myModel python medvlm.py
