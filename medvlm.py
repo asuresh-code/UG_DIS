@@ -20,7 +20,7 @@ temp_generation_config = GenerationConfig(
     pad_token_id=151643,
 )
 
-questions = [{"image": ['images/mdb146.png'], "problem": "What content appears in this image?\nA) Cardiac tissue\nB) Breast tissue\nC) Liver tissue\nD) Skin tissue", "solution": "B", "answer": "Breast tissue"}, {"image": ["images/person19_virus_50.jpeg"], "problem": "What content appears in this image?\nA) Lungs\nB) Bladder\nC) Brain\nD) Heart", "solution": "A", "answer": "Lungs"},{"image":["images/abd-normal023599.png"],"problem":"Is any abnormality evident in this image?\nA) No\nB) Yes.","solution":"A","answer":"No"}, {"image":["images/foot089224.png"],"problem":"Which imaging technique was utilized for acquiring this image?\nA) MRI\nB) Electroencephalogram (EEG)\nC) Ultrasound\nD) Angiography","solution":"A","answer":"MRI"}, {"image":["images/knee031316.png"],"problem":"What can be observed in this image?\nA) Chondral abnormality\nB) Bone density loss\nC) Synovial cyst formation\nD) Ligament tear","solution":"A","answer":"Chondral abnormality"}, {"image":["images/shoulder045906.png"],"problem":"What can be visually detected in this picture?\nA) Bone fracture\nB) Soft tissue fluid\nC) Blood clot\nD) Tendon tear","solution":"B","answer":"Soft tissue fluid"}, {"image":["images/brain003631.png"],"problem":"What attribute can be observed in this image?\nA) Focal flair hyperintensity\nB) Bone fracture\nC) Vascular malformation\nD) Ligament tear","solution":"A","answer":"Focal flair hyperintensity"}, {"image":["images/mrabd005680.png"],"problem":"What can be observed in this image?\nA) Pulmonary embolism\nB) Pancreatic abscess\nC) Intraperitoneal mass\nD) Cardiac tamponade","solution":"C","answer":"Intraperitoneal mass"}]
+questions = [{"image": ['../images/mdb146.png'], "problem": "What content appears in this image?\nA) Cardiac tissue\nB) Breast tissue\nC) Liver tissue\nD) Skin tissue", "solution": "B", "answer": "Breast tissue"}, {"image": ["../images/person19_virus_50.jpeg"], "problem": "What content appears in this image?\nA) Lungs\nB) Bladder\nC) Brain\nD) Heart", "solution": "A", "answer": "Lungs"},{"image":["../images/abd-normal023599.png"],"problem":"Is any abnormality evident in this image?\nA) No\nB) Yes.","solution":"A","answer":"No"}, {"image":["../images/foot089224.png"],"problem":"Which imaging technique was utilized for acquiring this image?\nA) MRI\nB) Electroencephalogram (EEG)\nC) Ultrasound\nD) Angiography","solution":"A","answer":"MRI"}, {"image":["../images/knee031316.png"],"problem":"What can be observed in this image?\nA) Chondral abnormality\nB) Bone density loss\nC) Synovial cyst formation\nD) Ligament tear","solution":"A","answer":"Chondral abnormality"}, {"image":["../images/shoulder045906.png"],"problem":"What can be visually detected in this picture?\nA) Bone fracture\nB) Soft tissue fluid\nC) Blood clot\nD) Tendon tear","solution":"B","answer":"Soft tissue fluid"}, {"image":["../images/brain003631.png"],"problem":"What attribute can be observed in this image?\nA) Focal flair hyperintensity\nB) Bone fracture\nC) Vascular malformation\nD) Ligament tear","solution":"A","answer":"Focal flair hyperintensity"}, {"image":["../images/mrabd005680.png"],"problem":"What can be observed in this image?\nA) Pulmonary embolism\nB) Pancreatic abscess\nC) Intraperitoneal mass\nD) Cardiac tamponade","solution":"C","answer":"Intraperitoneal mass"}]
 
 QUESTION_TEMPLATE = """
     {Question} 
@@ -32,7 +32,7 @@ QUESTION_TEMPLATE = """
 
 messages = [[{
     "role": "user",
-    "content": [{"type": "image", "image": f'file://{question["image"][0]}'}, {"type": "text","text": QUESTION_TEMPLATE.format(Question=question['problem'])}]
+    "content": [{"type": "image", "image": f"file://{question['image'][0]}"}, {"type": "text","text": QUESTION_TEMPLATE.format(Question=question['problem'])}]
 }] for question in questions]
 
 text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
@@ -40,7 +40,6 @@ text = [processor.apply_chat_template(message, tokenize=False, add_generation_pr
 image_inputs = []
 video_inputs = []
 for message in messages:
-    print(message)
     image_input, video_input = process_vision_info(message)
     image_inputs.append(image_input)
     video_inputs.append(video_input)
@@ -67,7 +66,15 @@ for i in range(len(inputs)):
     generated_ids_trimmed.append(generated_id_trimmed)
 
 output_texts = []
-for id in generated_ids_trimmed:
-    output_text = processor.batch_decode(id, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+count = 0
+for i in range(len(generated_ids_trimmed)):
+    output_text = processor.batch_decode(generated_ids_trimmed[i], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     output_texts.append(output_text)
     print(f'model output: {output_text}')
+    answer = output_text[0][output_text[0].index("<answer>") + 8]
+    print(answer)
+    print(questions[i]["solution"])
+    if questions[i]["solution"] == answer:
+        count +=1
+print(count/len(generated_ids_trimmed))
+    
