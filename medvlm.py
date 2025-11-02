@@ -43,7 +43,7 @@ def options_maker(options):
         output_text += "\n" + prefix[i] + ") " + options[i]
     return output_text
 
-questions = [{"image": "../image_mri/test/" + row["image"], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
+questions = [{"image": "../image_mri/test/" + row["image"][0], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
     Your task: 
