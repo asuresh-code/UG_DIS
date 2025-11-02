@@ -8,7 +8,7 @@ import pandas as pd
 import os
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
-files_in_use = os.listdir("image_mri/test")
+files_in_use = os.listdir("../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 print(df["image"][2])
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
@@ -43,7 +43,7 @@ def options_maker(options):
         output_text += "\n" + prefix[i] + ") " + options[i]
     return output_text
 
-questions = [{"image": row["image"], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
+questions = [{"image": "../image_mri/test/" + row["image"], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
     Your task: 
@@ -58,6 +58,7 @@ messages = [[{
 }] for question in questions]
 
 text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
+print(text[0])
 
 image_inputs = []
 video_inputs = []
@@ -100,7 +101,7 @@ for i in range(len(generated_ids_trimmed)):
         count +=1
 print(count/len(generated_ids_trimmed))
     
-imagenet_path = "image_mri/"
+imagenet_path = "../image_mri/"
 image_size = 256
 dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor(), transforms.Normalize((0.2056, 0.2056, 0.2056), (0.2215, 0.2215, 0.2215))]))
 data_loader = torch.utils.data.DataLoader(dataset, shuffle=False, drop_last=False)
@@ -157,7 +158,7 @@ batch_size = adv_pixel_values.shape[0]
 generated_texts = []
 for b in range(batch_size):
     kwargs = {
-        "pixel_values": adv_pixel_values[b:b+1],  # single image batch
+        "pixel_values": adv_pixel_values[b:b+1],
         "input_ids": input_ids[b:b+1],
         "attention_mask": attention_mask[b:b+1],
         "generation_config": temp_generation_config,
