@@ -54,7 +54,7 @@ QUESTION_TEMPLATE = """
 
 messages = [[{
     "role": "user",
-    "content": [{"type": "image", "image": f"file://{question['image'][0]}"}, {"type": "text","text": QUESTION_TEMPLATE.format(Question=question['problem'])}]
+    "content": [{"type": "image", "image": f"file://{question['image']}"}, {"type": "text","text": QUESTION_TEMPLATE.format(Question=question['problem'])}]
 }] for question in questions]
 
 text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
