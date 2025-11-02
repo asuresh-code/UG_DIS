@@ -18,4 +18,8 @@ python3 -m pip install qwen_vl_utils
 
 python3 -m pip install accelerate
 
+python3 -m pip install numpy
+
+python3 -m pip install pandas
+
 conda run -n myModel python medvlm.py
