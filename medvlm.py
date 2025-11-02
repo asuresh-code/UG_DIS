@@ -1,6 +1,20 @@
 from transformers import Qwen2VLForConditionalGeneration, AutoProcessor, GenerationConfig
 from qwen_vl_utils import process_vision_info
 import torch
+import torchvision
+import torchvision.transforms as transforms
+import numpy as np
+import pandas as pd
+import os
+
+df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
+files_in_use = os.listdir("image_mri/test")
+adjusted_files_in_use = [["images/" + file] for file in files_in_use]
+print(df["image"][2])
+df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
+print(df.shape)
+for index, row in df.iterrows():
+    print(row)
 
 MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
@@ -9,6 +23,8 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.bfloat16,
     device_map="auto",
 )
+
+device = torch.device("cuda:0")
 
 processor = AutoProcessor.from_pretrained(MODEL_PATH)
 
@@ -20,8 +36,14 @@ temp_generation_config = GenerationConfig(
     pad_token_id=151643,
 )
 
-questions = [{"image": ['../images/mdb146.png'], "problem": "What content appears in this image?\nA) Cardiac tissue\nB) Breast tissue\nC) Liver tissue\nD) Skin tissue", "solution": "B", "answer": "Breast tissue"}, {"image": ["../images/person19_virus_50.jpeg"], "problem": "What content appears in this image?\nA) Lungs\nB) Bladder\nC) Brain\nD) Heart", "solution": "A", "answer": "Lungs"},{"image":["../images/abd-normal023599.png"],"problem":"Is any abnormality evident in this image?\nA) No\nB) Yes.","solution":"A","answer":"No"}, {"image":["../images/foot089224.png"],"problem":"Which imaging technique was utilized for acquiring this image?\nA) MRI\nB) Electroencephalogram (EEG)\nC) Ultrasound\nD) Angiography","solution":"A","answer":"MRI"}, {"image":["../images/knee031316.png"],"problem":"What can be observed in this image?\nA) Chondral abnormality\nB) Bone density loss\nC) Synovial cyst formation\nD) Ligament tear","solution":"A","answer":"Chondral abnormality"}, {"image":["../images/shoulder045906.png"],"problem":"What can be visually detected in this picture?\nA) Bone fracture\nB) Soft tissue fluid\nC) Blood clot\nD) Tendon tear","solution":"B","answer":"Soft tissue fluid"}, {"image":["../images/brain003631.png"],"problem":"What attribute can be observed in this image?\nA) Focal flair hyperintensity\nB) Bone fracture\nC) Vascular malformation\nD) Ligament tear","solution":"A","answer":"Focal flair hyperintensity"}, {"image":["../images/mrabd005680.png"],"problem":"What can be observed in this image?\nA) Pulmonary embolism\nB) Pancreatic abscess\nC) Intraperitoneal mass\nD) Cardiac tamponade","solution":"C","answer":"Intraperitoneal mass"}]
+prefix = ["A", "B", "C", "D", "E", "F", "G"]
+def options_maker(options):
+    output_text = ""
+    for i in range(len(options)):
+        output_text += "\n" + prefix[i] + ") " + options[i]
+    return output_text
 
+questions = [{"image": row["image"], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
     Your task: 
@@ -78,3 +100,71 @@ for i in range(len(generated_ids_trimmed)):
         count +=1
 print(count/len(generated_ids_trimmed))
     
+imagenet_path = "image_mri/"
+image_size = 256
+dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor(), transforms.Normalize((0.2056, 0.2056, 0.2056), (0.2215, 0.2215, 0.2215))]))
+data_loader = torch.utils.data.DataLoader(dataset, shuffle=False, drop_last=False)
+
+exmp_batch, _ = next(iter(data_loader))
+
+inp_imgs = exmp_batch.clone().requires_grad_()
+
+
+target_text = np.full(1, "A cancerous tumour").tolist()
+enc = processor(images=inp_imgs, text=target_text, padding=True, return_tensors="pt")
+
+pixel_values = enc["pixel_values"].to(device)
+image_grid_thw = enc['image_grid_thw'].to(device)
+pixel_values = pixel_values.clone().detach().requires_grad_(True)
+input_ids = enc["input_ids"].to(device)
+attention_mask = enc["attention_mask"].to(device)
+
+row = torch.tensor([1, 256, 256], dtype=torch.long)
+image_grid_thw = row.unsqueeze(0).repeat(len(dataset), 1)
+
+print(inp_imgs.shape)
+print(len(dataset))
+
+
+kwargs = {"pixel_values": pixel_values, "image_grid_thw": image_grid_thw, "input_ids": input_ids, "attention_mask": attention_mask}
+print(image_grid_thw.shape)
+
+output = model(**kwargs)
+
+
+loss=output.loss
+model.zero_grad()
+loss.backward()
+
+
+mean = torch.tensor([0.2056, 0.2056, 0.2056], device=device).view(1,3,1,1)
+sd = torch.tensor([0.2215, 0.2215, 0.2215], device=device).view(1,3,1,1)
+
+pixel_values_denormalised = pixel_values*sd + mean
+
+grad_sign = pixel_values_denormalised.grad.detach().sign()
+
+adv_pixel_values = pixel_values_denormalised + 0.02*grad_sign
+
+adv_pixel_values = torch.clamp(adv_pixel_values, 0.0, 1.0)
+
+adv_pixel_values_norm = (adv_pixel_values - mean) / sd
+
+adv_pixel_values = adv_pixel_values.to(device)
+
+batch_size = adv_pixel_values.shape[0]
+
+generated_texts = []
+for b in range(batch_size):
+    kwargs = {
+        "pixel_values": adv_pixel_values[b:b+1],  # single image batch
+        "input_ids": input_ids[b:b+1],
+        "attention_mask": attention_mask[b:b+1],
+        "generation_config": temp_generation_config,
+        "use_cache": True,
+    }
+    gen_ids = model.generate(**kwargs)
+    text_out = processor.batch_decode(gen_ids, skip_special_tokens=True)
+    generated_texts.append(text_out[0])
+
+print(generated_texts)
