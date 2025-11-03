@@ -128,7 +128,7 @@ input_ids = enc["input_ids"].to(device)
 attention_mask = enc["attention_mask"].to(device)
 
 row = torch.tensor([1, 256, 256], dtype=torch.long)
-image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1)
+""" image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1) """
 
 print(inp_imgs.shape)
 print(len(filtered_subset))
