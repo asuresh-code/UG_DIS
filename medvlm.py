@@ -116,7 +116,7 @@ filtered_subset = torch.utils.data.Subset(dataset, indices)
 exmp_batch, _ = next(iter(data_loader))
 
 inp_imgs = exmp_batch.clone().requires_grad_() """
-inp_imgs = [img for img, _ in filtered_subset]
+inp_imgs = [img.convert("RGB") for img, _ in filtered_subset]
 
 
 target_text = np.full(len(filtered_subset), "A cancerous tumour").tolist()
