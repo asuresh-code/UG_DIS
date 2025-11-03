@@ -13,8 +13,8 @@ adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 print(df["image"][2])
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
 print(df.shape)
-for index, row in df.iterrows():
-    print(row)
+df = df.head(10)
+print(df.shape)
 
 MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
@@ -103,11 +103,15 @@ for i in range(len(generated_ids_trimmed)):
     except ValueError:
         continue
 print(count/len(generated_ids_trimmed))
+
+selected_images = ["../image_mri/test/" + filename[0].split("/")[1] for filename in list(df.image)]
     
 imagenet_path = "../image_mri/"
 image_size = 256
 dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor(), transforms.Normalize((0.2056, 0.2056, 0.2056), (0.2215, 0.2215, 0.2215))]))
-data_loader = torch.utils.data.DataLoader(dataset, shuffle=False, drop_last=False)
+indices = [i for i, (imgs) in enumerate(dataset.imgs) if imgs[0] in selected_images]
+filtered_subset = torch.utils.data.Subset(dataset, indices)
+data_loader = torch.utils.data.DataLoader(filtered_subset, shuffle=False, drop_last=False)
 
 exmp_batch, _ = next(iter(data_loader))
 
