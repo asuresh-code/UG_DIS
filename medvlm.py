@@ -119,7 +119,7 @@ inp_imgs = exmp_batch.clone().requires_grad_() """
 inp_imgs = [img for img, _ in filtered_subset]
 
 
-target_text = np.full(1, "A cancerous tumour").tolist()
+target_text = np.full(len(filtered_subset), "A cancerous tumour").tolist()
 enc = processor(images=inp_imgs, text=target_text, padding=True, return_tensors="pt")
 
 pixel_values = enc["pixel_values"].to(device)
@@ -136,7 +136,7 @@ print(pixel_values.shape)
 
 
 kwargs = {"pixel_values": pixel_values, "image_grid_thw": image_grid_thw, "input_ids": input_ids, "attention_mask": attention_mask}
-print(image_grid_thw.shape)
+print(image_grid_thw)
 
 output = model(**kwargs)
 
