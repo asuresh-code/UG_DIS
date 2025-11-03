@@ -111,11 +111,12 @@ image_size = 256
 dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size)]))
 indices = [i for i, (imgs) in enumerate(dataset.imgs) if imgs[0] in selected_images]
 filtered_subset = torch.utils.data.Subset(dataset, indices)
-data_loader = torch.utils.data.DataLoader(filtered_subset, shuffle=False, drop_last=False)
+""" data_loader = torch.utils.data.DataLoader(filtered_subset, shuffle=False, drop_last=False)
 
 exmp_batch, _ = next(iter(data_loader))
 
-inp_imgs = exmp_batch.clone().requires_grad_()
+inp_imgs = exmp_batch.clone().requires_grad_() """
+inp_imgs = [img for img, _ in filtered_subset]
 
 
 target_text = np.full(1, "A cancerous tumour").tolist()
