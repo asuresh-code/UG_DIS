@@ -128,10 +128,10 @@ input_ids = enc["input_ids"].to(device)
 attention_mask = enc["attention_mask"].to(device)
 
 row = torch.tensor([1, 256, 256], dtype=torch.long)
-""" image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1) """
+image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1)
 
-print(inp_imgs.shape)
-print(len(filtered_subset))
+print(image_grid_thw.shape)
+print(pixel_values.shape)
 
 
 kwargs = {"pixel_values": pixel_values, "image_grid_thw": image_grid_thw, "input_ids": input_ids, "attention_mask": attention_mask}
