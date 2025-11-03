@@ -108,7 +108,7 @@ selected_images = ["../image_mri/test/" + filename[0].split("/")[1] for filename
     
 imagenet_path = "../image_mri/"
 image_size = 256
-dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor(), transforms.Normalize((0.2056, 0.2056, 0.2056), (0.2215, 0.2215, 0.2215))]))
+dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor()]))
 indices = [i for i, (imgs) in enumerate(dataset.imgs) if imgs[0] in selected_images]
 filtered_subset = torch.utils.data.Subset(dataset, indices)
 data_loader = torch.utils.data.DataLoader(filtered_subset, shuffle=False, drop_last=False)
@@ -144,19 +144,11 @@ loss=output.loss
 model.zero_grad()
 loss.backward()
 
+grad_sign = pixel_values.grad.detach().sign()
 
-mean = torch.tensor([0.2056, 0.2056, 0.2056], device=device).view(1,3,1,1)
-sd = torch.tensor([0.2215, 0.2215, 0.2215], device=device).view(1,3,1,1)
-
-pixel_values_denormalised = pixel_values*sd + mean
-
-grad_sign = pixel_values_denormalised.grad.detach().sign()
-
-adv_pixel_values = pixel_values_denormalised + 0.02*grad_sign
+adv_pixel_values = pixel_values + 0.02*grad_sign
 
 adv_pixel_values = torch.clamp(adv_pixel_values, 0.0, 1.0)
-
-adv_pixel_values_norm = (adv_pixel_values - mean) / sd
 
 adv_pixel_values = adv_pixel_values.to(device)
 
