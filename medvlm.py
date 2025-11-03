@@ -108,7 +108,7 @@ selected_images = ["../image_mri/test/" + filename[0].split("/")[1] for filename
     
 imagenet_path = "../image_mri/"
 image_size = 256
-dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size), transforms.ToTensor()]))
+dataset = torchvision.datasets.ImageFolder(root=imagenet_path, transform=transforms.Compose([transforms.Resize(image_size), transforms.CenterCrop(image_size)]))
 indices = [i for i, (imgs) in enumerate(dataset.imgs) if imgs[0] in selected_images]
 filtered_subset = torch.utils.data.Subset(dataset, indices)
 data_loader = torch.utils.data.DataLoader(filtered_subset, shuffle=False, drop_last=False)
@@ -127,8 +127,8 @@ pixel_values = pixel_values.clone().detach().requires_grad_(True)
 input_ids = enc["input_ids"].to(device)
 attention_mask = enc["attention_mask"].to(device)
 
-row = torch.tensor([1, 256, 256], dtype=torch.long)
-image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1)
+""" row = torch.tensor([1, 256, 256], dtype=torch.long)
+image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1) """
 
 print(image_grid_thw.shape)
 print(pixel_values.shape)
