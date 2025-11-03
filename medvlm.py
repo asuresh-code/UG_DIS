@@ -94,11 +94,14 @@ for i in range(len(generated_ids_trimmed)):
     output_text = processor.batch_decode(generated_ids_trimmed[i], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     output_texts.append(output_text)
     print(f'model output: {output_text}')
-    answer = output_text[0][output_text[0].index("<answer>") + 8]
-    print(answer)
-    print(questions[i]["solution"])
-    if questions[i]["solution"] == answer:
-        count +=1
+    try:
+        answer = output_text[0][output_text[0].index("<answer>") + 8]
+        print(answer)
+        print(questions[i]["solution"])
+        if questions[i]["solution"] == answer:
+            count +=1
+    except ValueError:
+        continue
 print(count/len(generated_ids_trimmed))
     
 imagenet_path = "../image_mri/"
