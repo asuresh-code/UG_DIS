@@ -78,7 +78,7 @@ generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_s
 
 generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
 
-print(generated_id_trimmed.shape)
+print(len(generated_id_trimmed))
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
 print(output_text.index("<answer>"))
