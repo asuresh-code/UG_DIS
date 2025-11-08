@@ -13,6 +13,54 @@ adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
 df = df.head(10)
 
+start_tag = [27,9217,29]
+end_tag = [522,9217,29]
+
+def splice_tokens(token_list):
+    return_list = []
+    start_found = [False, False, False]
+    end_found = [False, False, False]
+    for token in token_list:
+        if start_found[0]:
+            if start_found[1]:
+                if start_found[2]:
+                    return_list.append(token)
+                    if end_found[0]:
+                        if end_found[1]:
+                            if end_found[2]:
+                                continue
+                            else:
+                                if token == end_tag[2]:
+                                    end_found[2] = True
+                                else:
+                                    end_found[0] = False
+                                    end_found[1] = False
+                        else:
+                            if token == end_tag[1]:
+                                end_found[1] = True
+                            else:
+                                end_found[0] = False
+                    else:
+                        if token == end_tag[0]:
+                            end_found[0] = True
+                else:
+                    if token == start_tag[2]:
+                        start_found[2] = True
+                    else:
+                        start_found[0] = False
+                        start_found[1] = False
+            else:
+                if token == start_tag[1]:
+                    start_found[1] = True
+                else:
+                    start_found[0] = False
+        else:
+            if token == start_tag[0]:
+                start_found[0] = True
+        if end_found[2]:
+            break
+    return return_list[:-3]
+
 MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
 model = Qwen2VLForConditionalGeneration.from_pretrained(
@@ -78,35 +126,16 @@ generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_s
 
 generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
 
-print(len(generated_id_trimmed))
+print(generated_id_trimmed)
+hanswer = splice_tokens(generated_id_trimmed.tolist()[0])
+answer_tensor = torch.tensor([hanswer])
+
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
 print(output_text[0].index("<answer>"))
 
-open_tag = processor(
-        text="<answer>",
-        images=image_inputs[0],
-        videos=video_inputs[0],
-        padding=True,
-        return_tensors="pt",
-    ).to("cuda")
+output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+print(f'model output: {output_text}')
 
-close_tag = processor(
-        text="</answer>",
-        images=image_inputs[0],
-        videos=video_inputs[0],
-        padding=True,
-        return_tensors="pt",
-    ).to("cuda")
 
-random_jargon = processor(
-        text="The man in the high castle",
-        images=image_inputs[0],
-        videos=video_inputs[0],
-        padding=True,
-        return_tensors="pt",
-    ).to("cuda")
 
-print(open_tag['input_ids'])
-print(close_tag['input_ids'])
-print(random_jargon['input_ids'])
