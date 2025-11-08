@@ -126,16 +126,16 @@ generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_s
 
 generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
 
-print(generated_id_trimmed)
-hanswer = splice_tokens(generated_id_trimmed[0].tolist())
+print(generated_id)
+""" hanswer = splice_tokens(generated_id_trimmed[0].tolist())
 answer_tensor = torch.tensor([hanswer])
-print(hanswer)
+print(hanswer) """
 
-output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+output_text = processor.batch_decode(generated_id, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
 
-output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-print(f'model output: {output_text}')
+""" output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
+print(f'model output: {output_text}') """
 
 
 
