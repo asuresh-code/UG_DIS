@@ -82,3 +82,31 @@ print(generated_id_trimmed.shape)
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
 print(output_text.index("<answer>"))
+
+open_tag = processor(
+        text="<answer>",
+        images=image_inputs[0],
+        videos=video_inputs[0],
+        padding=True,
+        return_tensors="pt",
+    ).to("cuda")
+
+close_tag = processor(
+        text="</answer>",
+        images=image_inputs[0],
+        videos=video_inputs[0],
+        padding=True,
+        return_tensors="pt",
+    ).to("cuda")
+
+random_jargon = processor(
+        text="The man in the high castle"
+        images=image_inputs[0],
+        videos=video_inputs[0],
+        padding=True,
+        return_tensors="pt",
+    ).to("cuda")
+
+print(open_tag['input_ids'])
+print(close_tag['input_ids'])
+print(random_jargon['input_ids'])
