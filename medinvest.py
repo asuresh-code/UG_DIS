@@ -81,7 +81,7 @@ generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.i
 print(len(generated_id_trimmed))
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
-print(output_text.index("<answer>"))
+print(output_text[0].index("<answer>"))
 
 open_tag = processor(
         text="<answer>",
