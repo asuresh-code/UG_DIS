@@ -10,11 +10,8 @@ import os
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
-print(df["image"][2])
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
-print(df.shape)
 df = df.head(10)
-print(df.shape)
 
 MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
@@ -58,7 +55,7 @@ messages = [[{
 }] for question in questions]
 
 text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
-print(text[0])
+
 
 image_inputs = []
 video_inputs = []
@@ -78,6 +75,8 @@ for i in range(len(image_inputs)):
     ).to("cuda")
     inputs.append(input)
 
+print(input)
+print(input.shape)
 generated_ids = []
 for input in inputs:
     generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config)
@@ -131,12 +130,7 @@ attention_mask = enc["attention_mask"].to(device)
 """ row = torch.tensor([1, 256, 256], dtype=torch.long)
 image_grid_thw = row.unsqueeze(0).repeat(len(filtered_subset), 1) """
 
-print(image_grid_thw.shape)
-print(pixel_values.shape)
-
-
 kwargs = {"pixel_values": pixel_values, "image_grid_thw": image_grid_thw, "input_ids": input_ids, "attention_mask": attention_mask}
-print(image_grid_thw)
 
 output = model(**kwargs)
 
