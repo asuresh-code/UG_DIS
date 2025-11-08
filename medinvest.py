@@ -122,7 +122,7 @@ input = processor(
     
 
 
-generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config)
+generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_scores=True)
 
 generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
 
