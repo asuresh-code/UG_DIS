@@ -22,4 +22,4 @@ python3 -m pip install numpy
 
 python3 -m pip install pandas
 
-conda run -n myModel python medvlm.py
+conda run -n myModel python medinvest.py
