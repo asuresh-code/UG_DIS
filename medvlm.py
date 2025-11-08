@@ -63,6 +63,7 @@ for message in messages:
     image_input, video_input = process_vision_info(message)
     image_inputs.append(image_input)
     video_inputs.append(video_input)
+    print(image_input)
 
 inputs = []
 for i in range(len(image_inputs)):
