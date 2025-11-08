@@ -129,10 +129,10 @@ generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.i
 print(generated_id_trimmed)
 hanswer = splice_tokens(generated_id_trimmed[0].tolist())
 answer_tensor = torch.tensor([hanswer])
+print(hanswer)
 
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
-print(output_text[0].index("<answer>"))
 
 output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
