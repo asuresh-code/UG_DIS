@@ -100,7 +100,7 @@ close_tag = processor(
     ).to("cuda")
 
 random_jargon = processor(
-        text="The man in the high castle"
+        text="The man in the high castle",
         images=image_inputs[0],
         videos=video_inputs[0],
         padding=True,
