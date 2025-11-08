@@ -63,7 +63,6 @@ for message in messages:
     image_input, video_input = process_vision_info(message)
     image_inputs.append(image_input)
     video_inputs.append(video_input)
-    print(image_input)
 
 input = processor(
         text=text[0],
@@ -77,9 +76,7 @@ input = processor(
 
 generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config)
 
-generated_ids_trimmed = []
-for i in range(len(inputs)):
-    generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
+generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
 
 print(generated_id_trimmed.shape)
 output_text = processor.batch_decode(generated_id_trimmed, skip_special_tokens=True, clean_up_tokenization_spaces=False)
