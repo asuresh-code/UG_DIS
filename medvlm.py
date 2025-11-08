@@ -76,7 +76,7 @@ for i in range(len(image_inputs)):
     inputs.append(input)
 
 print(input)
-print(input.shape)
+print(input['input_ids'].size())
 generated_ids = []
 for input in inputs:
     generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config)
