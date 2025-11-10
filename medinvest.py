@@ -159,7 +159,9 @@ string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
 answer_token_pos = find_answer_token(string_tokens)
 print(generated_id['sequences'][0][answer_token_pos])
 print(len(generated_id["logits"][76]))
-print(generated_id["logits"].shape)
+
+np.savetxt("outputtut.txt", generated_id["logits"].numpy())
+
 top3 = generated_id["logits"]
 print(top3)
 for tok in top3:
