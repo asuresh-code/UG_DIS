@@ -157,6 +157,7 @@ tokenizer = processor.tokenizer
 string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
 answer_token_pos = find_answer_token(string_tokens)
 print(generated_id['sequences'][0][answer_token_pos])
+print(generated_id["logits"])
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
