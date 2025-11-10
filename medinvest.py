@@ -95,11 +95,14 @@ def find_answer_token(token_list):
         if "answer" in token:
             count += 1
 
-    token_target_pos = 0
+    token_target_pos = -1
     found_start = False
     for i in range(len(token_list)):
         if found_start:
             if token_list[i] != ">":
+                if len(token_list[i]) > 1 and ord(token_list[i][1]) == 266:
+                    continue
+                print(token_list[i])
                 token_target_pos = i
                 break
         else:
@@ -108,8 +111,6 @@ def find_answer_token(token_list):
                     count -= 1
                 else:
                     found_start = True
-    print(token_target_pos)
-    print(token_list[token_target_pos])
     return token_target_pos
 
 
@@ -137,39 +138,41 @@ for message in messages:
     image_inputs.append(image_input)
     video_inputs.append(video_input)
 
-input = processor(
-        text=text[0],
-        images=image_inputs[0],
-        videos=video_inputs[0],
+inputs = []
+for i in range(len(image_inputs)):
+    input = processor(
+        text=text[i],
+        images=image_inputs[i],
+        videos=video_inputs[i],
         padding=True,
         return_tensors="pt",
     ).to("cuda")
-    
+    inputs.append(input)
 
+generated_ids = []
+for input in inputs:
+    generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+    generated_ids.append(generated_id)
 
-generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+output_texts = []
+for i in range(len(generated_ids)):
+    output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+    output_texts.append(output_text)
 
-output_text = processor.decode(generated_id['sequences'][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-print(f'model output: {output_text}')
-
-print(len(generated_id["logits"]))
-
-tokenizer = processor.tokenizer
-string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
-answer_token_pos = find_answer_token(string_tokens)
-print(generated_id['sequences'][0][answer_token_pos])
-print(len(generated_id["logits"][76]))
-
-with open("outputt.txt", "w") as file:
-    file.write(str(generated_id["logits"]))
-
-top3 = generated_id["logits"]
-print(top3)
-for tok in top3:
-    print(tokenizer.decode(tok))
+for i in range(len(generated_ids)):
+    log_len = len(generated_ids[i]["logits"])
+    tokenizer = processor.tokenizer
+    string_tokens = tokenizer.convert_ids_to_tokens(generated_ids[i]['sequences'][0])
+    answer_token_pos = find_answer_token(string_tokens)
+    if answer_token_pos == -1:
+        print("No answer found")
+        continue
+    id_len = len(generated_ids[i]['sequences'][0])
+    top3 = generated_ids[i]["logits"][log_len - (id_len - answer_token_pos)][0].argsort(dim=0, descending=True)[:3]
+    print(output_texts[i])
+    print(top3)
+    for tok in top3:
+        print(tokenizer.decode(tok))
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
-
-
-
