@@ -170,7 +170,6 @@ for i in range(len(generated_ids)):
 
 for i in range(len(generated_ids)):
     print(len(generated_ids_grad[i]['logits'][0]))
-    print(len(generated_ids[i]['logits']))
     sequence = []
     for token in generated_ids_grad[i]['logits'][0]:
         sequence.append(token.argmax())
@@ -187,9 +186,11 @@ for i in range(len(generated_ids)):
         print(tokenizer.decode(tok))
 
     label = torch.tensor([[sequence[answer_token_pos]]])
+    label.squeeze(1)
     print(label)
     print(generated_ids_grad[i]["logits"].shape)
     logits = generated_ids_grad[i]["logits"][:, answer_token_pos: answer_token_pos+1, :]
+    logits = logits.squeeze(1)
     print(logits.shape)
     print(label.shape)
     print(model.config.vocab_size)
