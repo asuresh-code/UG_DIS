@@ -188,11 +188,9 @@ for i in range(len(generated_ids)):
         logits_vec.unsqueeze(0),
         label_scalar.unsqueeze(0),
     )
-    print(loss)
     loss.backward()
-    print(inputs[i]['pixel_values'].grad)
     signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
-    print(signed_grad)
+    print(signed_grad.shape)
     plt.imshow((signed_grad[0].cpu().detach().numpy() * 0.5 + 0.5))
     plt.show()
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
