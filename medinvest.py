@@ -160,7 +160,7 @@ for input in inputs:
     sequence = generated_id['sequences']
     sequence.detach()
     sequence.to(device)
-    generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=input['attention_mask'])
+    generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=input['attention_mask'], image_grid_thw=input['image_grid_thw'])
     generated_ids.append(generated_id)
     generated_ids_grad.append(generated_id_grad)
 
