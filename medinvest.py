@@ -188,7 +188,7 @@ for i in range(len(generated_ids)):
     label = torch.tensor([sequence[answer_token_pos]])
     print(label)
     print(generated_ids_grad[i]["logits"].shape)
-    logits = generated_ids_grad[i]["logits"][:, answer_token_pos: answer_token_pos+1, :]
+    logits = generated_ids_grad[i]["logits"][:, answer_token_pos, :]
     logits = logits.squeeze(1)
     print(logits.shape)
     print(label.shape)
@@ -204,17 +204,17 @@ for i in range(len(generated_ids)):
     print(logits_vec.shape)  # MUST be [151936]
 
     # 3. prepare label
-    label_scalar = torch.tensor(sequence[answer_token_pos], dtype=torch.long)
+    label_scalar = sequence[answer_token_pos]
 
     # 4. loss
     loss = torch.nn.functional.cross_entropy(
         logits_vec.unsqueeze(0),        # [1, vocab]
         label_scalar.unsqueeze(0),      # [1]
     )
-
+    print(loss)
 
     loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
-
+    print(loss)
     loss.backward()
     print(loss)
     print(torch.isnan(logits).any(), torch.isinf(logits).any())
