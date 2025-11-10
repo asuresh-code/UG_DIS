@@ -82,11 +82,35 @@ temp_generation_config = GenerationConfig(
 )
 
 prefix = ["A", "B", "C", "D", "E", "F", "G"]
+
 def options_maker(options):
     output_text = ""
     for i in range(len(options)):
         output_text += "\n" + prefix[i] + ") " + options[i]
     return output_text
+
+def find_answer_token(token_list):
+    count = -2
+    for token in token_list:
+        if "answer" in token:
+            count += 1
+
+    token_target_pos = 0
+    found_start = False
+    for i in range(len(token_list)):
+        if found_start:
+            if token_list[i] != ">":
+                token_target_pos = i
+                break
+        else:
+            if "answer" in token_list[i]:
+                if count > 0:
+                    count -= 1
+                else:
+                    found_start = True
+    print(token_target_pos)
+    print(token_list[token_target_pos])
+    return token_target_pos
 
 questions = [{"image": "../image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
@@ -122,29 +146,17 @@ input = processor(
     
 
 
-generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_scores=True, output_logits=True)
-
-generated_id_trimmed = [out_ids[len(in_ids):] for in_ids, out_ids in zip(input.input_ids, generated_id)]
-
-lek = generated_id.keys()
-print(lek)
-print(generated_id['sequences'])
-print(len(generated_id['scores']))
-print(generated_id['scores'][4].shape)
-print(generated_id['scores'][8].shape)
-print(len(generated_id['logits']))
-print(generated_id['logits'][4].shape)
-print(generated_id['logits'][8].shape)
-print(generated_id['logits'][43].shape)
-""" hanswer = splice_tokens(generated_id_trimmed[0].tolist())
-answer_tensor = torch.tensor([hanswer])
-print(hanswer) """
+generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
 
 output_text = processor.decode(generated_id['sequences'][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
+
+print(len(generated_id["logits"]))
+
 tokenizer = processor.tokenizer
 string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
-print(string_tokens)
+answer_token_pos = find_answer_token(string_tokens)
+print(generated_id['sequences'][0][answer_token_pos])
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
