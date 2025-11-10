@@ -213,7 +213,7 @@ for i in range(len(generated_ids)):
     loss = loss_fn(logits.view(-1, vocab_size), labels.view(-1))
     loss.backward()
     print(loss)
-    print(signed_grad)
+   
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
