@@ -160,7 +160,7 @@ for input in inputs:
     sequence = generated_id['sequences']
     sequence.detach()
     sequence.to(device)
-    generated_id_grad = model(input_ids=sequence)
+    generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=input['attention_mask'])
     generated_ids.append(generated_id)
     generated_ids_grad.append(generated_id_grad)
 
@@ -190,6 +190,7 @@ for i in range(len(generated_ids)):
     )
     print(loss)
     loss.backward()
+    print(inputs[i]['pixel_values'].grad)
     signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
     print(signed_grad)
     plt.imshow(signed_grad[0] * 0.5 + 0.5)
