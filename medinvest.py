@@ -198,6 +198,20 @@ for i in range(len(generated_ids)):
     print("sliced logits shape:", logits.shape)
     print("logits.dim():", logits.dim())
 
+    logits_vec = generated_ids_grad[i]["logits"][0, answer_token_pos, :]  # [vocab]
+
+    # 2. make sure it's right
+    print(logits_vec.shape)  # MUST be [151936]
+
+    # 3. prepare label
+    label_scalar = torch.tensor(sequence[answer_token_pos], dtype=torch.long)
+
+    # 4. loss
+    loss = torch.nn.functional.cross_entropy(
+        logits_vec.unsqueeze(0),        # [1, vocab]
+        label_scalar.unsqueeze(0),      # [1]
+    )
+
 
     loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
 
