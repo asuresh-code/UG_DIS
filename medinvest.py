@@ -6,6 +6,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
 
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
@@ -180,46 +181,17 @@ for i in range(len(generated_ids)):
     if answer_token_pos == -1:
         print("No answer found")
         continue
-    top3 = generated_ids_grad[i]['logits'][0][answer_token_pos].argsort(dim=0, descending=True)[:3]
-    print(top3)
-    for tok in top3:
-        print(tokenizer.decode(tok))
-
-    label = torch.tensor([sequence[answer_token_pos]])
-    print(label)
-    print(generated_ids_grad[i]["logits"].shape)
-    logits = generated_ids_grad[i]["logits"][:, answer_token_pos, :]
-    logits = logits.squeeze(1)
-    print(logits.shape)
-    print(label.shape)
-    print(model.config.vocab_size)
-
-    print("original logits shape:", generated_ids_grad[i]["logits"].shape)
-    print("sliced logits shape:", logits.shape)
-    print("logits.dim():", logits.dim())
-
-    logits_vec = generated_ids_grad[i]["logits"][0, answer_token_pos, :]  # [vocab]
-
-    # 2. make sure it's right
-    print(logits_vec.shape)  # MUST be [151936]
-
-    # 3. prepare label
+    logits_vec = generated_ids_grad[i]["logits"][0, answer_token_pos, :] 
+ 
     label_scalar = sequence[answer_token_pos]
-
-    # 4. loss
     loss = torch.nn.functional.cross_entropy(
-        logits_vec.unsqueeze(0),        # [1, vocab]
-        label_scalar.unsqueeze(0),      # [1]
+        logits_vec.unsqueeze(0),
+        label_scalar.unsqueeze(0),
     )
     print(loss)
-
-    loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
-    print(loss)
     loss.backward()
-    print(loss)
-    print(torch.isnan(logits).any(), torch.isinf(logits).any())
-    """ signed_grad = torch.sign(inputs[i]['pixel_values'].grad) """
-   
-
+    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
+    print(signed_grad)
+    plt.imshow(signed_grad[0] * 0.5 + 0.5)
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
