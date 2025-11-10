@@ -6,6 +6,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
+import matplotlib.pyplot as plt
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
@@ -65,9 +66,10 @@ MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
 model = Qwen2VLForConditionalGeneration.from_pretrained(
     MODEL_PATH,
-    torch_dtype=torch.bfloat16,
+    torch_dtype=torch.float32,
     device_map="auto",
 )
+
 
 device = torch.device("cuda:0")
 
@@ -147,12 +149,19 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
+    input['pixel_values'] = input['pixel_values'].clone().detach().requires_grad_(True)
     inputs.append(input)
 
 generated_ids = []
+generated_ids_grad = []
 for input in inputs:
-    generated_id = model.generate(**input, use_cache=True, max_new_tokens=1024, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+    generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+    sequence = generated_id['sequences']
+    sequence.detach()
+    sequence.to(device)
+    generated_id_grad = model(input_ids=sequence)
     generated_ids.append(generated_id)
+    generated_ids_grad.append(generated_id_grad)
 
 output_texts = []
 for i in range(len(generated_ids)):
@@ -160,19 +169,38 @@ for i in range(len(generated_ids)):
     output_texts.append(output_text)
 
 for i in range(len(generated_ids)):
-    log_len = len(generated_ids[i]["logits"])
+    print(len(generated_ids_grad[i]['logits'][0]))
+    print(len(generated_ids[i]['logits']))
+    sequence = []
+    for token in generated_ids_grad[i]['logits'][0]:
+        sequence.append(token.argmax())
     tokenizer = processor.tokenizer
-    string_tokens = tokenizer.convert_ids_to_tokens(generated_ids[i]['sequences'][0])
+    string_tokens = tokenizer.convert_ids_to_tokens(sequence)
+    print(string_tokens)
     answer_token_pos = find_answer_token(string_tokens)
     if answer_token_pos == -1:
         print("No answer found")
         continue
-    id_len = len(generated_ids[i]['sequences'][0])
-    top3 = generated_ids[i]["logits"][log_len - (id_len - answer_token_pos)][0].argsort(dim=0, descending=True)[:3]
-    print(output_texts[i])
+    top3 = generated_ids_grad[i]['logits'][0][answer_token_pos].argsort(dim=0, descending=True)[:3]
     print(top3)
     for tok in top3:
         print(tokenizer.decode(tok))
+
+    label = torch.tensor([[sequence[answer_token_pos]]])
+    print(label)
+    print(generated_ids_grad[i]["logits"].shape)
+    logits = generated_ids_grad[i]["logits"][:, answer_token_pos: answer_token_pos+1, :]
+    print(logits.shape)
+    print(label.shape)
+    print(model.config.vocab_size)
+    loss = model.loss_function(logits=logits, labels=label, vocab_size=model.config.vocab_size)
+
+    loss.backward()
+    print(loss)
+    print(torch.isnan(logits).any(), torch.isinf(logits).any())
+    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
+    print(signed_grad)
+    plt.imshow(signed_grad * 0.5 + 0.5)
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
