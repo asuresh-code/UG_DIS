@@ -158,7 +158,7 @@ tokenizer = processor.tokenizer
 string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
 answer_token_pos = find_answer_token(string_tokens)
 print(generated_id['sequences'][0][answer_token_pos])
-top3 = generated_id["logits"][0].argsort(dim=0, descending=True)[:3]
+top3 = generated_id["logits"][0][87].argsort(dim=0, descending=True)[:3]
 print(top3)
 for tok in top3:
     print(tokenizer.decode(tok))
