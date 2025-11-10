@@ -193,6 +193,7 @@ for i in range(len(generated_ids)):
     print(inputs[i]['pixel_values'].grad)
     signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
     print(signed_grad)
-    plt.imshow(signed_grad[0] * 0.5 + 0.5)
+    plt.imshow((signed_grad[0].cpu().detach().numpy() * 0.5 + 0.5))
+    plt.show()
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
