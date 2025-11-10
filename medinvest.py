@@ -112,6 +112,7 @@ def find_answer_token(token_list):
     print(token_list[token_target_pos])
     return token_target_pos
 
+
 questions = [{"image": "../image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
@@ -157,7 +158,10 @@ tokenizer = processor.tokenizer
 string_tokens = tokenizer.convert_ids_to_tokens(generated_id['sequences'][0])
 answer_token_pos = find_answer_token(string_tokens)
 print(generated_id['sequences'][0][answer_token_pos])
-print(generated_id["logits"])
+top3 = generated_id["logits"][0].argsort(dim=0, descending=True)[:3]
+print(top3)
+for tok in top3:
+    print(tokenizer.decode(tok))
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
