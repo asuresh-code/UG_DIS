@@ -138,6 +138,7 @@ image_inputs = []
 video_inputs = []
 for message in messages:
     image_input, video_input = process_vision_info(message)
+    print(image_input)
     image_inputs.append(image_input)
     video_inputs.append(video_input)
 
@@ -151,6 +152,7 @@ for i in range(len(image_inputs)):
         return_tensors="pt",
     ).to("cuda")
     input['pixel_values'] = input['pixel_values'].clone().detach().requires_grad_(True)
+    print(input['pixel_values'].shape)
     inputs.append(input)
 
 generated_ids = []
@@ -170,13 +172,11 @@ for i in range(len(generated_ids)):
     output_texts.append(output_text)
 
 for i in range(len(generated_ids)):
-    print(len(generated_ids_grad[i]['logits'][0]))
     sequence = []
     for token in generated_ids_grad[i]['logits'][0]:
         sequence.append(token.argmax())
     tokenizer = processor.tokenizer
     string_tokens = tokenizer.convert_ids_to_tokens(sequence)
-    print(string_tokens)
     answer_token_pos = find_answer_token(string_tokens)
     if answer_token_pos == -1:
         print("No answer found")
@@ -193,5 +193,3 @@ for i in range(len(generated_ids)):
     print(signed_grad.shape)
     plt.imshow((signed_grad[0].cpu().detach().numpy() * 0.5 + 0.5))
     plt.show()
-""" output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
-print(f'model output: {output_text}') """
