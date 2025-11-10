@@ -160,7 +160,8 @@ answer_token_pos = find_answer_token(string_tokens)
 print(generated_id['sequences'][0][answer_token_pos])
 print(len(generated_id["logits"][76]))
 
-np.savetxt("outputtut.txt", np.array(generated_id["logits"]))
+with("outputt.txt", "w") as file:
+    file.write(str(generated_id["logits"]))
 
 top3 = generated_id["logits"]
 print(top3)
