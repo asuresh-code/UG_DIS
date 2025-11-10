@@ -185,8 +185,7 @@ for i in range(len(generated_ids)):
     for tok in top3:
         print(tokenizer.decode(tok))
 
-    label = torch.tensor([[sequence[answer_token_pos]]])
-    label.squeeze(1)
+    label = torch.tensor([sequence[answer_token_pos]])
     print(label)
     print(generated_ids_grad[i]["logits"].shape)
     logits = generated_ids_grad[i]["logits"][:, answer_token_pos: answer_token_pos+1, :]
