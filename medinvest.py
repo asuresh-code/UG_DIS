@@ -66,7 +66,7 @@ MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
 model = Qwen2VLForConditionalGeneration.from_pretrained(
     MODEL_PATH,
-    torch_dtype=torch.float32,
+    torch_dtype=torch.bfloat16,
     device_map="auto",
 )
 
@@ -193,7 +193,7 @@ for i in range(len(generated_ids)):
     print(logits.shape)
     print(label.shape)
     print(model.config.vocab_size)
-    loss = model.loss_function(logits=logits, labels=label, vocab_size=model.config.vocab_size)
+    loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
 
     loss.backward()
     print(loss)
