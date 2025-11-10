@@ -194,34 +194,17 @@ for i in range(len(generated_ids)):
     print(label.shape)
     print(model.config.vocab_size)
 
-    print("logits shape:", logits.shape)
-    print("any NaN in logits?", torch.isnan(logits).any().item())
-    print("any Inf in logits?", torch.isinf(logits).any().item())
-    print("logits max/min:", logits.max().item(), logits.min().item())
+    print("original logits shape:", generated_ids_grad[i]["logits"].shape)
+    print("sliced logits shape:", logits.shape)
+    print("logits.dim():", logits.dim())
 
-    print("label:", label)
-    print("label dtype:", label.dtype)
-    print("label range check:", label.item() >= 0 and label.item() < model.config.vocab_size)
+
     loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
 
     loss.backward()
     print(loss)
     print(torch.isnan(logits).any(), torch.isinf(logits).any())
     """ signed_grad = torch.sign(inputs[i]['pixel_values'].grad) """
-
-
-    batch_size = 1
-    seq_len = 250
-    vocab_size = 50257
-
-    logits = torch.randn(batch_size, seq_len, vocab_size, dtype=torch.float32, requires_grad=True)
-
-    labels = torch.randint(0, vocab_size, (batch_size, seq_len), dtype=torch.long)
-
-    loss_fn = torch.nn.CrossEntropyLoss()
-    loss = loss_fn(logits.view(-1, vocab_size), labels.view(-1))
-    loss.backward()
-    print(loss)
    
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
