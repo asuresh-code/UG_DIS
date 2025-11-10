@@ -6,7 +6,7 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
+
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
@@ -200,7 +200,6 @@ for i in range(len(generated_ids)):
     print(torch.isnan(logits).any(), torch.isinf(logits).any())
     signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
     print(signed_grad)
-    plt.imshow(signed_grad * 0.5 + 0.5)
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
