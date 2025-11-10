@@ -142,6 +142,8 @@ print(hanswer) """
 
 output_text = processor.decode(generated_id['sequences'][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}')
+string_tokens = processor.convert_ids_to_tokens(generated_id['sequences'][0])
+print(string_tokens)
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
 print(f'model output: {output_text}') """
