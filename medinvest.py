@@ -193,6 +193,15 @@ for i in range(len(generated_ids)):
     print(logits.shape)
     print(label.shape)
     print(model.config.vocab_size)
+
+    print("logits shape:", logits.shape)
+    print("any NaN in logits?", torch.isnan(logits).any().item())
+    print("any Inf in logits?", torch.isinf(logits).any().item())
+    print("logits max/min:", logits.max().item(), logits.min().item())
+
+    print("label:", label)
+    print("label dtype:", label.dtype)
+    print("label range check:", label.item() >= 0 and label.item() < model.config.vocab_size)
     loss = model.loss_function(logits=logits.float(), labels=label, vocab_size=model.config.vocab_size)
 
     loss.backward()
