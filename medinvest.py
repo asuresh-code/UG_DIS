@@ -198,7 +198,21 @@ for i in range(len(generated_ids)):
     loss.backward()
     print(loss)
     print(torch.isnan(logits).any(), torch.isinf(logits).any())
-    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
+    """ signed_grad = torch.sign(inputs[i]['pixel_values'].grad) """
+
+
+    batch_size = 1
+    seq_len = 250
+    vocab_size = 50257
+
+    logits = torch.randn(batch_size, seq_len, vocab_size, dtype=torch.float32, requires_grad=True)
+
+    labels = torch.randint(0, vocab_size, (batch_size, seq_len), dtype=torch.long)
+
+    loss_fn = torch.nn.CrossEntropyLoss()
+    loss = loss_fn(logits.view(-1, vocab_size), labels.view(-1))
+    loss.backward()
+    print(loss)
     print(signed_grad)
 
 """ output_text = processor.batch_decode(answer_tensor, skip_special_tokens=True, clean_up_tokenization_spaces=False)
