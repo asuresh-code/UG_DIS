@@ -136,11 +136,15 @@ image_inputs = []
 video_inputs = []
 count = 0
 for message in messages:
+    print("Message content: ", message[0]["content"]["image"])
     count += 1
     image_input, video_input = process_vision_info(message)
+    print("Processed image: ", image_input)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
+    print("Image Tesnro first: ", image_tensor)
     image_tensor = image_tensor.float().clone().detach().requires_grad_(True)
+    print("Image Tesnro second: ", image_tensor)
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
