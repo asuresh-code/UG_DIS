@@ -161,7 +161,7 @@ for input in inputs:
     generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
     sequence = generated_id['sequences']
     sequence.detach()
-    sequence.to(device)
+    sequence = sequence.to(device)
     attention_mask = torch.ones_like(sequence)
     generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
     generated_ids.append(generated_id)
@@ -198,6 +198,12 @@ for i in range(len(generated_ids)):
         logits_vec.unsqueeze(0),
         label_scalar.unsqueeze(0),
     )
+    print("Logits shape: ",logits_vec.unsqueeze(0).shape)
+    print("label_scalar shape: ",label_scalar.unsqueeze(0).shape)
+    print("logits Value: ",logits_vec.unsqueeze(0))
+    print("label_scalar Value: ",label_scalar.unsqueeze(0))
+    
+    print(loss)
     loss.backward()
     signed_grad = torch.sign(image_inputs[i].grad)
     adv_image = image_inputs[i].clone().detach() + signed_grad
