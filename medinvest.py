@@ -6,8 +6,6 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
-import matplotlib.pyplot as plt
-
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
@@ -136,10 +134,14 @@ text = [processor.apply_chat_template(message, tokenize=False, add_generation_pr
 
 image_inputs = []
 video_inputs = []
+count = 0
 for message in messages:
+    count += 1
     image_input, video_input = process_vision_info(message)
-    print(image_input)
-    image_inputs.append(image_input)
+    transform = transforms.Compose([transforms.PILToTensor()])
+    image_tensor = transform(image_input[0])
+    image_tensor = image_tensor.float().clone().detach().requires_grad_(True)
+    image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
 inputs = []
@@ -151,8 +153,6 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
-    input['pixel_values'] = input['pixel_values'].clone().detach().requires_grad_(True)
-    print(input['pixel_values'].shape)
     inputs.append(input)
 
 generated_ids = []
@@ -162,15 +162,18 @@ for input in inputs:
     sequence = generated_id['sequences']
     sequence.detach()
     sequence.to(device)
-    generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=input['attention_mask'], image_grid_thw=input['image_grid_thw'])
+    attention_mask = torch.ones_like(sequence)
+    generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
     generated_ids.append(generated_id)
     generated_ids_grad.append(generated_id_grad)
 
 output_texts = []
+successes = 0
 for i in range(len(generated_ids)):
     output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     output_texts.append(output_text)
 
+adv_images = []
 for i in range(len(generated_ids)):
     sequence = []
     for token in generated_ids_grad[i]['logits'][0]:
@@ -181,6 +184,13 @@ for i in range(len(generated_ids)):
     if answer_token_pos == -1:
         print("No answer found")
         continue
+    else:
+        actual_answer = questions[i]['solution']
+        if len(string_tokens[answer_token_pos]) > 1:
+            actual_answer = ">" + actual_answer
+        print(actual_answer)
+        if actual_answer == string_tokens[answer_token_pos]:
+            successes += 1
     logits_vec = generated_ids_grad[i]["logits"][0, answer_token_pos, :] 
  
     label_scalar = sequence[answer_token_pos]
@@ -189,7 +199,40 @@ for i in range(len(generated_ids)):
         label_scalar.unsqueeze(0),
     )
     loss.backward()
-    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
-    print(signed_grad.shape)
-    plt.imshow((signed_grad[0].cpu().detach().numpy() * 0.5 + 0.5))
-    plt.show()
+    signed_grad = torch.sign(image_inputs[i].grad)
+    adv_image = image_inputs[i].clone().detach() + signed_grad
+    adv_image = torch.clamp(adv_image, min=0, max=255)
+    adv_images.append(adv_image)
+
+print("Success Rate:",successes/len(generated_ids))
+
+inputs = []
+for i in range(len(image_inputs)):
+    input = processor(
+        text=text[i],
+        images=adv_images[i],
+        videos=video_inputs[i],
+        padding=True,
+        return_tensors="pt",
+    ).to("cuda")
+    inputs.append(input)
+
+generated_ids = []
+for input in inputs:
+    generated_id = model.generate(**input, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+    generated_ids.append(generated_id)
+
+successes = 0
+for i in range(len(generated_ids)):
+    output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+    try:
+        answer = output_text[0][output_text[0].rindex("<answer>") + 8]
+        print(output_text[0])
+        print(output_text[0][output_text[0].rindex("<answer>")])
+        print(answer)
+        print(questions[i]["solution"])
+        if questions[i]["solution"] == answer:
+            successes +=1
+    except ValueError:
+        continue
+print("Success Rate After Adv:",successes/len(generated_ids))
