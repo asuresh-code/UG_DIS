@@ -142,8 +142,7 @@ for message in messages:
     print("Processed image: ", image_input)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
-    image_tensor = image_tensor.float().clone().detach().requires_grad_(True)
-    image_tensor = image_tensor.to(device)
+    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
