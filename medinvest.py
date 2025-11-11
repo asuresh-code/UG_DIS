@@ -215,6 +215,9 @@ for i in range(len(generated_ids)):
     print("Image needs grad: ", image_inputs[i].requires_grad)
     print("Image is leaf tensor: ", image_inputs[i].is_leaf)
     print("Image has grad fn: ", image_inputs[i].grad_fn)
+    print("Embedded Image grad: ", inputs[i]['pixel_values'].grad)
+    print("Logits grad fn:",generated_ids_grad[i]["logits"].grad_fn)
+    print("Logits grad:",generated_ids_grad[i]["logits"].grad)
     signed_grad = torch.sign(image_inputs[i].grad)
     adv_image = image_inputs[i].clone().detach() + signed_grad
     adv_image = torch.clamp(adv_image, min=0, max=255)
