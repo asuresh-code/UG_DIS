@@ -152,6 +152,7 @@ for message in messages:
 
 inputs = []
 for i in range(len(image_inputs)):
+    print("id(orig):", id(image_inputs[i]), image_inputs[i].device, image_inputs[i].requires_grad)
     input = processor(
         text=text[i],
         images=image_inputs[i],
@@ -159,6 +160,7 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
+    print("id(proc pixel_values):", id(input['pixel_values']), input['pixel_values'].device, input['pixel_values'].requires_grad)
     inputs.append(input)
 
 generated_ids = []
