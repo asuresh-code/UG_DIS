@@ -136,7 +136,7 @@ image_inputs = []
 video_inputs = []
 count = 0
 for message in messages:
-    print("Message content: ", message[0]["content"]["image"])
+    print("Message content: ", message[0]["content"][0]["image"])
     count += 1
     image_input, video_input = process_vision_info(message)
     print("Processed image: ", image_input)
