@@ -146,7 +146,7 @@ for message in messages:
     image_tensor = image_tensor.float().clone().detach().requires_grad_(True)
     print("Image Tesnro second: ", image_tensor)
     np_array = image_tensor.clone().detach().cpu().numpy()
-    np.save(f"image_tensor_{count}.txt", np_array.flatten(), fmt='%.6f')
+    np.savetxt(f"image_tensor_{count}.txt", np_array.flatten(), fmt='%.6f')
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
