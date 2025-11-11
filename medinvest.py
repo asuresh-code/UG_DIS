@@ -204,7 +204,10 @@ for i in range(len(generated_ids)):
     print("label_scalar Value: ",label_scalar.unsqueeze(0))
     
     print(loss)
+    print("Image input: ", image_inputs[i])
+    print("Image input grad before: ", image_inputs[i].grad)
     loss.backward()
+    print("Image input grad after: ", image_inputs[i].grad)
     signed_grad = torch.sign(image_inputs[i].grad)
     adv_image = image_inputs[i].clone().detach() + signed_grad
     adv_image = torch.clamp(adv_image, min=0, max=255)
