@@ -162,6 +162,7 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
+    input["pixel_values"] = input["pixel_values"].requires_grad_(True)
     pv = input["pixel_values"]
     print("PV leaf:", pv.is_leaf)
     print("PV requires_grad:", pv.requires_grad)
