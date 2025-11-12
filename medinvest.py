@@ -219,9 +219,19 @@ for i in range(len(image_inputs)):
     inputs.append(input)
 
 generated_ids = []
+count = 0
 for input in inputs:
+    count += 1
     generated_id = model.generate(**input, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
     generated_ids.append(generated_id)
+    if count == 1:
+        print("text:", text[count])
+        print(torch.eq(adv_images[count], image_inputs[count]))
+        np_array = image_inputs[count].cpu().numpy() 
+        np.savetxt('tensor_orig.txt', np_array.flatten(), fmt='%.6f')
+        np_array = adv_images[count].cpu().numpy() 
+        np.savetxt('tensor_new.txt', np_array.flatten(), fmt='%.6f')
+
 
 successes = 0
 for i in range(len(generated_ids)):
