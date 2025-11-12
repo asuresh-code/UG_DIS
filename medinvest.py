@@ -177,6 +177,9 @@ output_texts = []
 successes = 0
 for i in range(len(generated_ids)):
     output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+    print(output_text)
+    output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+    print(output_text)
     output_texts.append(output_text)
 
 adv_images = []
@@ -249,10 +252,10 @@ for i in range(len(generated_ids)):
     output_text = processor2.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     try:
         answer = output_text[0][output_text[0].rindex("<answer>") + 8]
-        print(output_text[0])
+        """         print(output_text[0])
         print(output_text[0][output_text[0].rindex("<answer>")])
         print(answer)
-        print(questions[i]["solution"])
+        print(questions[i]["solution"]) """
         if questions[i]["solution"] == answer:
             successes +=1
     except ValueError:
