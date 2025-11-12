@@ -6,6 +6,8 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
+from PIL import Image
+
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
@@ -70,17 +72,10 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.float32,
     device_map="cuda:0",
 )
-model2 = Qwen2VLForConditionalGeneration.from_pretrained(
-    MODEL_PATH,
-    torch_dtype=torch.float32,
-    device_map="cuda:0",
-)
-
 
 device = torch.device("cuda:0")
 
 processor = AutoProcessor.from_pretrained(MODEL_PATH)
-processor2 = AutoProcessor.from_pretrained(MODEL_PATH)
 
 temp_generation_config = GenerationConfig(
     max_new_tokens=1024,
@@ -123,7 +118,7 @@ def find_answer_token(token_list):
     return token_target_pos
 
 
-questions = [{"image": "../image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
+questions = [{"filename": row["image"][0].split("/")[1],"image": "../image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
     Your task: 
@@ -178,8 +173,6 @@ successes = 0
 for i in range(len(generated_ids)):
     output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     print(output_text)
-    output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-    print(output_text)
     output_texts.append(output_text)
 
 adv_images = []
@@ -210,54 +203,13 @@ for i in range(len(generated_ids)):
     print(loss)
     loss.backward()
     signed_grad = torch.sign(image_inputs[i].grad)
-    adv_image = image_inputs[i].clone().detach()
+    adv_image = image_inputs[i].clone().detach() + signed_grad
     adv_image = torch.clamp(adv_image, min=0, max=255)
     adv_images.append(adv_image)
 
 print("Success Rate:",successes/len(generated_ids))
 
-image_inputs = []
-video_inputs = []
-for message in messages:
-    image_input, video_input = process_vision_info(message)
-    transform = transforms.Compose([transforms.PILToTensor()])
-    image_tensor = transform(image_input[0])
-    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
-    image_inputs.append(image_tensor)
-    video_inputs.append(video_input)
-
-text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
-
-inputs = []
-for i in range(len(image_inputs)):
-    input = processor2(
-        text=text[i],
-        images=image_inputs[i],
-        videos=video_inputs[i],
-        padding=True,
-        return_tensors="pt",
-    ).to("cuda")
-    inputs.append(input)
-
-generated_ids = []
-count = 0
-for input in inputs:
-    count += 1
-    generated_id = model2.generate(**input, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
-    generated_ids.append(generated_id)
-
-
-successes = 0
-for i in range(len(generated_ids)):
-    output_text = processor2.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-    try:
-        answer = output_text[0][output_text[0].rindex("<answer>") + 8]
-        """         print(output_text[0])
-        print(output_text[0][output_text[0].rindex("<answer>")])
-        print(answer)
-        print(questions[i]["solution"]) """
-        if questions[i]["solution"] == answer:
-            successes +=1
-    except ValueError:
-        continue
-print("Success Rate After Adv:",successes/len(generated_ids))
+for i in range(len(adv_images)):
+    transform = transforms.ToPILImage()
+    img = transform(adv_images[i])
+    img_sv = img.save("../adv_image_mri/test/" + questions[i]["filename"])
