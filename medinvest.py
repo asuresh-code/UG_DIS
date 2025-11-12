@@ -166,7 +166,7 @@ generated_ids_grad = []
 for input in inputs:
     generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
     sequence = generated_id['sequences']
-    sequence.detach()
+    sequence.clone().detach()
     sequence = sequence.to(device)
     attention_mask = torch.ones_like(sequence)
     generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
