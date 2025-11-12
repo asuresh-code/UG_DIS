@@ -16,6 +16,9 @@ df = df.head(10)
 start_tag = [27,9217,29]
 end_tag = [522,9217,29]
 
+torch.set_grad_enabled(True)
+torch.autograd.set_detect_anomaly(True)
+
 def splice_tokens(token_list):
     return_list = []
     start_found = [False, False, False]
