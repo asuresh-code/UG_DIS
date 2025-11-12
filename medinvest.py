@@ -70,6 +70,11 @@ model = Qwen2VLForConditionalGeneration.from_pretrained(
     torch_dtype=torch.float32,
     device_map="cuda:0",
 )
+model2 = Qwen2VLForConditionalGeneration.from_pretrained(
+    MODEL_PATH,
+    torch_dtype=torch.float32,
+    device_map="cuda:0",
+)
 
 
 device = torch.device("cuda:0")
@@ -222,7 +227,7 @@ generated_ids = []
 count = 0
 for input in inputs:
     count += 1
-    generated_id = model.generate(**input, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+    generated_id = model2.generate(**input, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
     generated_ids.append(generated_id)
 
 
