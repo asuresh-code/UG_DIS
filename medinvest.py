@@ -9,7 +9,7 @@ import os
 from PIL import Image
 
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
-files_in_use = os.listdir("../image_mri/test")
+files_in_use = os.listdir("../adv_image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
 df = df.head(10)
@@ -118,7 +118,7 @@ def find_answer_token(token_list):
     return token_target_pos
 
 
-questions = [{"filename": row["image"][0].split("/")[1],"image": "../image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
+questions = [{"filename": row["image"][0].split("/")[1],"image": "../adv_image_mri/test/" + row["image"][0].split("/")[1], "problem": row["question"] + options_maker(row["options"]), "solution": prefix[row["options"].index(row["answer"])], "answer": row["answer"]} for index, row in df.iterrows()]
 QUESTION_TEMPLATE = """
     {Question} 
     Your task: 
@@ -175,7 +175,7 @@ for i in range(len(generated_ids)):
     print(output_text)
     output_texts.append(output_text)
 
-adv_images = []
+""" adv_images = []
 for i in range(len(generated_ids)):
     sequence = []
     for token in generated_ids_grad[i]['logits'][0]:
@@ -205,11 +205,11 @@ for i in range(len(generated_ids)):
     signed_grad = torch.sign(image_inputs[i].grad)
     adv_image = image_inputs[i].clone().detach() + signed_grad
     adv_image = torch.clamp(adv_image, min=0, max=255)
-    adv_images.append(adv_image)
+    adv_images.append(adv_image) """
 
 print("Success Rate:",successes/len(generated_ids))
 
-for i in range(len(adv_images)):
+""" for i in range(len(adv_images)):
     transform = transforms.ToPILImage()
     img = transform(adv_images[i])
-    img_sv = img.save("../adv_image_mri/test/" + questions[i]["filename"])
+    img_sv = img.save("../adv_image_mri/test/" + questions[i]["filename"]) """
