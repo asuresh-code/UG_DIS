@@ -10,6 +10,9 @@ module load Anaconda3/2022.05
 module load cuDNN/8.9.2.26-CUDA-12.1.1
 
 source activate myModel
+
+python --version
+
 python3 -m pip install torch==2.9.0 torchvision
 
 python3 -m pip install transformers==4.57.1
