@@ -223,6 +223,8 @@ for message in messages:
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
+text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
+
 inputs = []
 for i in range(len(image_inputs)):
     input = processor2(
