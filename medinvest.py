@@ -213,6 +213,16 @@ for i in range(len(generated_ids)):
 
 print("Success Rate:",successes/len(generated_ids))
 
+image_inputs = []
+video_inputs = []
+for message in messages:
+    image_input, video_input = process_vision_info(message)
+    transform = transforms.Compose([transforms.PILToTensor()])
+    image_tensor = transform(image_input[0])
+    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    image_inputs.append(image_tensor)
+    video_inputs.append(video_input)
+
 inputs = []
 for i in range(len(image_inputs)):
     input = processor2(
