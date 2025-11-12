@@ -162,7 +162,6 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
-    input["pixel_values"] = input["pixel_values"].requires_grad_(True)
     pv = input["pixel_values"]
     print("PV leaf:", pv.is_leaf)
     print("PV requires_grad:", pv.requires_grad)
@@ -231,11 +230,35 @@ for i in range(len(generated_ids)):
     print("Embedded Image grad: ", inputs[i]['pixel_values'].grad)
     print("Logits grad fn:",generated_ids_grad[i]["logits"].grad_fn)
     print("Logits grad:",generated_ids_grad[i]["logits"].grad)
-    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
-    inputs[i]['pixel_values'] = inputs[i]['pixel_values'].clone().detach() + signed_grad*0.05
-    inputs[i]['pixel_values'] = torch.clamp(inputs[i]['pixel_values'], min=0, max=1)
+    signed_grad = torch.sign(image_inputs[i].grad)
+    adv_image = image_inputs[i].clone().detach() + signed_grad*0.05
+    adv_image = torch.clamp(adv_image, min=0, max=255)
+    adv_images.append(adv_image)
 
 print("Success Rate:",successes/len(generated_ids))
+
+inputs = []
+for i in range(len(image_inputs)):
+    print("IMAGE leaf:", image_inputs[i].is_leaf)
+    print("IMAGE requires_grad:", image_inputs[i].requires_grad)
+    print("IMAGE device:", image_inputs[i].device)
+    print("IMAGE dtype:", image_inputs[i].dtype)
+    print("IMAGE id:", id(image_inputs[i]))
+    input = processor(
+        text=text[i],
+        images=adv_images[i],
+        videos=video_inputs[i],
+        padding=True,
+        return_tensors="pt",
+    ).to("cuda")
+    pv = input["pixel_values"]
+    print("PV leaf:", pv.is_leaf)
+    print("PV requires_grad:", pv.requires_grad)
+    print("PV device:", pv.device)
+    print("PV dtype:", pv.dtype)
+    print("PV id:", id(pv))
+    print("PV grad_fn:", pv.grad_fn)
+    inputs.append(input)
 
 generated_ids = []
 for input in inputs:
