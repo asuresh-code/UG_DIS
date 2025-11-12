@@ -65,7 +65,7 @@ MODEL_PATH = 'JZPeterPan/MedVLM-R1'
 
 model = Qwen2VLForConditionalGeneration.from_pretrained(
     MODEL_PATH,
-    torch_dtype=torch.bfloat16,
+    torch_dtype=torch.float32,
     device_map="cuda:0",
 )
 
