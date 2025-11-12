@@ -24,4 +24,8 @@ python3 -m pip install pandas
 
 python3 -m pip install matplotlib
 
+pip show transformers
+
+pip show torch
+
 conda run -n myModel python medinvest.py
