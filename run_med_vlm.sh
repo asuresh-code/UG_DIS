@@ -11,6 +11,7 @@ module load cuDNN/8.9.2.26-CUDA-12.1.1
 
 source activate myModel
 
+conda install python=3.13.9
 python --version
 
 python3 -m pip install torch==2.9.0 torchvision
