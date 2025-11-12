@@ -6,7 +6,6 @@ import torchvision.transforms as transforms
 import numpy as np
 import pandas as pd
 import os
-
 df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluation_Data/medical_multimodel_evaluation_data.json")
 files_in_use = os.listdir("../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
