@@ -148,7 +148,11 @@ for message in messages:
 
 inputs = []
 for i in range(len(image_inputs)):
-    print("id(orig):", id(image_inputs[i]), image_inputs[i].device, image_inputs[i].requires_grad)
+    print("IMAGE leaf:", image_inputs[i].is_leaf)
+    print("IMAGE requires_grad:", image_inputs[i].requires_grad)
+    print("IMAGE device:", image_inputs[i].device)
+    print("IMAGE dtype:", image_inputs[i].dtype)
+    print("IMAGE id:", id(image_inputs[i]))
     input = processor(
         text=text[i],
         images=image_inputs[i],
@@ -156,7 +160,13 @@ for i in range(len(image_inputs)):
         padding=True,
         return_tensors="pt",
     ).to("cuda")
-    print("id(proc pixel_values):", id(input['pixel_values']), input['pixel_values'].device, input['pixel_values'].requires_grad)
+    pv = input["pixel_values"]
+    print("PV leaf:", pv.is_leaf)
+    print("PV requires_grad:", pv.requires_grad)
+    print("PV device:", pv.device)
+    print("PV dtype:", pv.dtype)
+    print("PV id:", id(pv))
+    print("PV grad_fn:", pv.grad_fn)
     inputs.append(input)
 
 generated_ids = []
