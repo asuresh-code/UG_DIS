@@ -231,23 +231,11 @@ for i in range(len(generated_ids)):
     print("Embedded Image grad: ", inputs[i]['pixel_values'].grad)
     print("Logits grad fn:",generated_ids_grad[i]["logits"].grad_fn)
     print("Logits grad:",generated_ids_grad[i]["logits"].grad)
-    signed_grad = torch.sign(image_inputs[i].grad)
-    adv_image = image_inputs[i].clone().detach() + signed_grad
-    adv_image = torch.clamp(adv_image, min=0, max=255)
-    adv_images.append(adv_image)
+    signed_grad = torch.sign(inputs[i]['pixel_values'].grad)
+    inputs[i]['pixel_values'] = inputs[i]['pixel_values'].clone().detach() + signed_grad*0.05
+    inputs[i]['pixel_values'] = torch.clamp(inputs[i]['pixel_values'], min=0, max=1)
 
 print("Success Rate:",successes/len(generated_ids))
-
-inputs = []
-for i in range(len(image_inputs)):
-    input = processor(
-        text=text[i],
-        images=adv_images[i],
-        videos=video_inputs[i],
-        padding=True,
-        return_tensors="pt",
-    ).to("cuda")
-    inputs.append(input)
 
 generated_ids = []
 for input in inputs:
