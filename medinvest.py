@@ -80,6 +80,7 @@ model2 = Qwen2VLForConditionalGeneration.from_pretrained(
 device = torch.device("cuda:0")
 
 processor = AutoProcessor.from_pretrained(MODEL_PATH)
+processor2 = AutoProcessor.from_pretrained(MODEL_PATH)
 
 temp_generation_config = GenerationConfig(
     max_new_tokens=1024,
@@ -214,7 +215,7 @@ print("Success Rate:",successes/len(generated_ids))
 
 inputs = []
 for i in range(len(image_inputs)):
-    input = processor(
+    input = processor2(
         text=text[i],
         images=image_inputs[i],
         videos=video_inputs[i],
@@ -233,7 +234,7 @@ for input in inputs:
 
 successes = 0
 for i in range(len(generated_ids)):
-    output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+    output_text = processor2.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
     try:
         answer = output_text[0][output_text[0].rindex("<answer>") + 8]
         print(output_text[0])
