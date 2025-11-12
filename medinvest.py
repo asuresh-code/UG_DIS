@@ -226,7 +226,7 @@ for input in inputs:
     generated_ids.append(generated_id)
     if count == 1:
         print("text:", text[count])
-        print(torch.eq(adv_images[count], image_inputs[count]))
+        print(torch.eq(adv_images[count], image_inputs[count]).all())
         np_array = image_inputs[count].clone().detach().cpu().numpy() 
         np.savetxt('tensor_orig.txt', np_array.flatten(), fmt='%.6f')
         np_array = adv_images[count].clone().detach().cpu().numpy() 
