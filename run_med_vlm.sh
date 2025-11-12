@@ -25,7 +25,7 @@ python3 -m pip install accelerate
 
 python3 -m pip install numpy
 
-python3 -m pip install pandas
+python3 -m pip install pandas --only-binary=:all:
 
 python3 -m pip install matplotlib
 
