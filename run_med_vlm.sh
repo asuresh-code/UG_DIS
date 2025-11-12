@@ -13,7 +13,7 @@ source activate myModel
 
 python --version
 
-python3 -m pip install torch==2.9.0 torchvision
+python3 -m pip install torch==2.6.0 torchvision
 
 python3 -m pip install transformers==4.57.1
 
