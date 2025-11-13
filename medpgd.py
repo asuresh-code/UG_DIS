@@ -141,17 +141,28 @@ count = 0
 for message in messages:
     count += 1
     image_input, video_input = process_vision_info(message)
-    if count == 1:
-        img_sv = image_input[0].save("../temp_comparison/" + questions[0]["filename"])
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
+    if count == 1:
+        transform = transforms.Compose([transforms.ToPILImage()])
+        img = transform(image_tensor)
+        img_sv = img.save("../temp_comparison/q" + questions[0]["filename"])
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    if count == 1:
+        transform = transforms.Compose([transforms.ToPILImage()])
+        img = transform(image_tensor)
+        img_sv = img.save("../temp_comparison/w" + questions[0]["filename"])
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
 for i in range(10):
     inputs = []
     for x in range(len(image_inputs)):
+        if x == 0:
+            print(text[0])
+            transform = transforms.ToPILImage()
+            img = transform(image_inputs[x])
+            img_sv = img.save("../temp_comparison/e" + questions[x]["filename"])
         input = processor(
             text=text[x],
             images=image_inputs[x],
