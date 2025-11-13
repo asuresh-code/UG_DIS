@@ -147,11 +147,11 @@ for message in messages:
 
 for i in range(10):
     inputs = []
-    for i in range(len(image_inputs)):
+    for x in range(len(image_inputs)):
         input = processor(
-            text=text[i],
-            images=image_inputs[i],
-            videos=video_inputs[i],
+            text=text[x],
+            images=image_inputs[x],
+            videos=video_inputs[x],
             padding=True,
             return_tensors="pt",
         ).to("cuda")
@@ -171,16 +171,15 @@ for i in range(10):
 
     output_texts = []
     successes = 0
-    for i in range(len(generated_ids)):
-        output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        if i == 0:
+    for x in range(len(generated_ids)):
+        output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        if x == 0:
             print(output_text)
-            print(questions[i]['filename'])
         output_texts.append(output_text)
 
-    for i in range(len(generated_ids)):
+    for x in range(len(generated_ids)):
         sequence = []
-        for token in generated_ids_grad[i]['logits'][0]:
+        for token in generated_ids_grad[x]['logits'][0]:
             sequence.append(token.argmax())
         tokenizer = processor.tokenizer
         string_tokens = tokenizer.convert_ids_to_tokens(sequence)
@@ -189,13 +188,13 @@ for i in range(10):
             print("No answer found")
             continue
         else:
-            actual_answer = questions[i]['solution']
+            actual_answer = questions[x]['solution']
             if len(string_tokens[answer_token_pos]) > 1:
                 actual_answer = ">" + actual_answer
             """ print(actual_answer) """
             if actual_answer == string_tokens[answer_token_pos]:
                 successes += 1
-        logits_vec = generated_ids_grad[i]["logits"][0, answer_token_pos, :] 
+        logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
         label_scalar = sequence[answer_token_pos]
         loss = torch.nn.functional.cross_entropy(
@@ -203,10 +202,10 @@ for i in range(10):
             label_scalar.unsqueeze(0),
         )    
         loss.backward()
-        signed_grad = torch.sign(image_inputs[i].grad)
-        adv_image = image_inputs[i].clone().detach() + signed_grad
+        signed_grad = torch.sign(image_inputs[x].grad)
+        adv_image = image_inputs[x].clone().detach() + signed_grad
         adv_image = torch.clamp(adv_image, min=0, max=255)
-        image_inputs[i] = adv_image
+        image_inputs[x] = adv_image
 
 
     print("Success Rate:",successes/len(generated_ids))
