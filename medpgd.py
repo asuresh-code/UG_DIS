@@ -144,6 +144,7 @@ for message in messages:
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
+print(video_inputs)
 
 for i in range(10):
     inputs = []
