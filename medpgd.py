@@ -143,26 +143,30 @@ for message in messages:
     image_input, video_input = process_vision_info(message)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
+    image_tensor_1 = image_tensor.float()
+    image_tensor_2 = image_tensor.float().clone()
+    image_tensor_3 = image_tensor.float().clone().detach()
+    image_tensor_4 = image_tensor.float().clone().detach().to(device)
+    image_tensor_5 = image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    
     if count == 1:
         transform = transforms.Compose([transforms.ToPILImage()])
-        img = transform(image_tensor)
+        img = transform(image_tensor_1)
         img_sv = img.save("../temp_comparison/q" + questions[0]["filename"])
-    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
-    if count == 1:
-        transform = transforms.Compose([transforms.ToPILImage()])
-        img = transform(image_tensor)
+        img = transform(image_tensor_2)
         img_sv = img.save("../temp_comparison/w" + questions[0]["filename"])
+        img = transform(image_tensor_3)
+        img_sv = img.save("../temp_comparison/e" + questions[0]["filename"])
+        img = transform(image_tensor_4)
+        img_sv = img.save("../temp_comparison/r" + questions[0]["filename"])
+        img = transform(image_tensor_5)
+        img_sv = img.save("../temp_comparison/t" + questions[0]["filename"])
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
 for i in range(10):
     inputs = []
     for x in range(len(image_inputs)):
-        if x == 0:
-            print(text[0])
-            transform = transforms.ToPILImage()
-            img = transform(image_inputs[x])
-            img_sv = img.save("../temp_comparison/e" + questions[x]["filename"])
         input = processor(
             text=text[x],
             images=image_inputs[x],
