@@ -145,7 +145,7 @@ for message in messages:
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
-for i in range(len(10)):
+for i in range(10):
     inputs = []
     for i in range(len(image_inputs)):
         input = processor(
