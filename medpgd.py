@@ -148,6 +148,8 @@ for message in messages:
 for i in range(10):
     inputs = []
     for x in range(len(image_inputs)):
+        if x == 0:
+            print(text[0])
         input = processor(
             text=text[x],
             images=image_inputs[x],
