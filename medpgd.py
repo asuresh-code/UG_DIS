@@ -143,18 +143,14 @@ for message in messages:
     image_input, video_input = process_vision_info(message)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
-    image_tensor_1 = image_tensor.clone()
-    image_tensor_2 = image_tensor.detach()
-    image_tensor_3 = image_tensor.to(device)
-    
+    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
     if count == 1:
         transform = transforms.Compose([transforms.ToPILImage()])
-        img = transform(image_tensor_1)
+        img = transform(image_tensor)
         img_sv = img.save("../temp_comparison/q" + questions[0]["filename"])
-        img = transform(image_tensor_2)
+        image_tensor = image_tensor.clone().detach().int()
+        img = transform(image_tensor)
         img_sv = img.save("../temp_comparison/w" + questions[0]["filename"])
-        img = transform(image_tensor_3)
-        img_sv = img.save("../temp_comparison/e" + questions[0]["filename"])
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
