@@ -146,7 +146,6 @@ for message in messages:
     image_tensor_1 = image_tensor.clone()
     image_tensor_2 = image_tensor.detach()
     image_tensor_3 = image_tensor.to(device)
-    image_tensor_4 = image_tensor.requires_grad_(True)
     
     if count == 1:
         transform = transforms.Compose([transforms.ToPILImage()])
@@ -156,8 +155,6 @@ for message in messages:
         img_sv = img.save("../temp_comparison/w" + questions[0]["filename"])
         img = transform(image_tensor_3)
         img_sv = img.save("../temp_comparison/e" + questions[0]["filename"])
-        img = transform(image_tensor_4)
-        img_sv = img.save("../temp_comparison/r" + questions[0]["filename"])
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
