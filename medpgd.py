@@ -150,6 +150,9 @@ for i in range(10):
     for x in range(len(image_inputs)):
         if x == 0:
             print(text[0])
+            transform = transforms.ToPILImage()
+            img = transform(image_inputs[x])
+            img_sv = img.save("../temp_comparison/" + questions[i]["filename"])
         input = processor(
             text=text[x],
             images=image_inputs[x],
@@ -208,6 +211,5 @@ for i in range(10):
         adv_image = image_inputs[x].clone().detach() + signed_grad
         adv_image = torch.clamp(adv_image, min=0, max=255)
         image_inputs[x] = adv_image
-
 
     print("Success Rate:",successes/len(generated_ids))
