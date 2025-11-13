@@ -177,7 +177,6 @@ for i in range(len(10)):
             print(output_text)
         output_texts.append(output_text)
 
-    adv_images = []
     for i in range(len(generated_ids)):
         sequence = []
         for token in generated_ids_grad[i]['logits'][0]:
@@ -206,6 +205,8 @@ for i in range(len(10)):
         signed_grad = torch.sign(image_inputs[i].grad)
         adv_image = image_inputs[i].clone().detach() + signed_grad
         adv_image = torch.clamp(adv_image, min=0, max=255)
-        adv_images.append(adv_image)
+        image_inputs[i] = adv_image
+        video_inputs[i] = video_inputs[i].clone().detach()
+
 
     print("Success Rate:",successes/len(generated_ids))
