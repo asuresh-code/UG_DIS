@@ -206,7 +206,6 @@ for i in range(10):
         adv_image = image_inputs[i].clone().detach() + signed_grad
         adv_image = torch.clamp(adv_image, min=0, max=255)
         image_inputs[i] = adv_image
-        video_inputs[i] = video_inputs[i].clone().detach()
 
 
     print("Success Rate:",successes/len(generated_ids))
