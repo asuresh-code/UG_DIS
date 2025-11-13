@@ -137,8 +137,12 @@ text = [processor.apply_chat_template(message, tokenize=False, add_generation_pr
 
 image_inputs = []
 video_inputs = []
+count = 0
 for message in messages:
+    count += 1
     image_input, video_input = process_vision_info(message)
+    if count == 1:
+        img_sv = image_input[0].save("../temp_comparison/" + questions[0]["filename"])
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
@@ -148,11 +152,6 @@ for message in messages:
 for i in range(10):
     inputs = []
     for x in range(len(image_inputs)):
-        if x == 0:
-            print(text[0])
-            transform = transforms.ToPILImage()
-            img = transform(image_inputs[x])
-            img_sv = img.save("../temp_comparison/" + questions[i]["filename"])
         input = processor(
             text=text[x],
             images=image_inputs[x],
