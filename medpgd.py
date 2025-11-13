@@ -144,7 +144,6 @@ for message in messages:
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
-print(video_inputs)
 
 for i in range(10):
     inputs = []
@@ -176,6 +175,7 @@ for i in range(10):
         output_text = processor.batch_decode(generated_ids[i][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
         if i == 0:
             print(output_text)
+            print(questions[i]['filename'])
         output_texts.append(output_text)
 
     for i in range(len(generated_ids)):
