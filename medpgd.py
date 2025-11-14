@@ -283,7 +283,7 @@ for i in range(iterations):
             final_image = torch.add(component1, component2)
 
             final_image = torch.clamp(final_image, min=0, max=255)
-            grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+            grey_image_tensors[x] = final_image.float()
             if x == 0:
                 print("GI requires grad:", grey_image_tensors[x].requires_grad)
                 print("GI grad value:",grey_image_tensors[x].grad)
