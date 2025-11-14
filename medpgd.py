@@ -134,7 +134,7 @@ messages = [[{
 
 text = [processor.apply_chat_template(message, tokenize=False, add_generation_prompt=True) for message in messages]
 
-
+grey_image_tensors = []
 image_inputs = []
 video_inputs = []
 count = 0
@@ -148,13 +148,17 @@ for message in messages:
     image_input, video_input = process_vision_info(message)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
-    image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
-    lower_bound_image_tensor = image_tensor.clone().detach() - total_budget
-    upper_bound_image_tensor = image_tensor.clone().detach() + total_budget
+    grey_image_tensor = image_tensor[0]
+    grey_image_tensor = grey_image_tensor[None, :, :]
+    grey_image_tensor = grey_image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    image_tensor = grey_image_tensor.repeat(3,1,1)
+    lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
+    upper_bound_image_tensor = grey_image_tensor.clone().detach() + total_budget
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
     lower_bound_budgets.append(lower_bound_image_tensor)
     upper_bound_budgets.append(upper_bound_image_tensor)
+    grey_image_tensors.append(grey_image_tensor)
 
 for i in range(iterations):
     inputs = []
@@ -212,10 +216,10 @@ for i in range(iterations):
         )
         model.zero_grad()
         loss.backward()
-        signed_grad = torch.sign(image_inputs[x].grad)
-        image_inputs[x].grad = None
+        signed_grad = torch.sign(grey_image_tensors[x].grad)
+        grey_image_tensors[x].grad = None
         with torch.no_grad():
-            adv_image = image_inputs[x].clone().detach() + signed_grad*alpha
+            adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
 
             lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
             non_lower_bound_pos = torch.logical_not(lower_bound_pos)
@@ -234,6 +238,11 @@ for i in range(iterations):
             final_image = torch.add(component1, component2)
 
             final_image = torch.clamp(final_image, min=0, max=255)
-            image_inputs[x] = final_image.requires_grad_(True)
+            grey_image_tensors[x] = final_image.requires_grad_(True)
+            image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
+
+transform = transforms.ToPILImage()
+img = transform(image_inputs[0])
+sv = img.save("a_image.png")

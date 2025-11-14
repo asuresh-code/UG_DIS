@@ -1,17 +1,29 @@
 import torch
 import torchvision.transforms as transforms
-import PIL as Image
+from PIL import Image
 
-img_tensor = torch.tensor([[[2, 4], [5, 2]],[[2, 1], [42, 2]],[[4,4], [5, 9]]])
-print(img_tensor)
-print(img_tensor.shape)
+
+image = "../../images_practice/mrabd005680.png"
+img = Image.open(image)
+
+transform = transforms.PILToTensor()
+img_tensor = transform(img)
+
 
 grey_image = img_tensor[0]
 grey_image = grey_image[None, :, :]
-print(grey_image.shape)
-print(grey_image)
+
+grey_copy = grey_image.clone().detach().to(torch.uint8)
+transform = transforms.ToPILImage()
+grey_pil = transform(grey_copy)
+
+
+save = grey_pil.save("grey_image.png")
+
 
 colour = grey_image.repeat(3,1,1)
 
-print(colour.shape)
-print(colour)
+color_pil = transform(colour)
+
+
+save = color_pil.save("rgb_image.png")
