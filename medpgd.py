@@ -205,11 +205,13 @@ for i in range(10):
         )
         print(loss)
         model.zero_grad()
-        if image_inputs[x].grad is not None:
-            print("resetting grad")
-            image_inputs[x].grad.zero_()    
         loss.backward()
+        print(f"is leaf?: {image_inputs[x].is_leaf}")
+        print(f"requires grad?: {image_inputs[x].requires_grad}") 
+        print(f"grad fn?: {image_inputs[x].grad_fn}")
+        print(f"grad?: {image_inputs[x].grad}") 
         signed_grad = torch.sign(image_inputs[x].grad)
+        image_inputs[x].grad = None
         with torch.no_grad():
             adv_image = image_inputs[x].clone().detach() + signed_grad
             adv_image = torch.clamp(adv_image, min=0, max=255)
