@@ -144,14 +144,6 @@ for message in messages:
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
-    if count == 1:
-        transform = transforms.Compose([transforms.ToPILImage()])
-        img = transform(image_tensor)
-        img_sv = img.save("../temp_comparison/q" + questions[0]["filename"])
-        image_tensor = image_tensor.clone().detach().to(torch.uint8)
-        print(image_tensor.max())
-        img = transform(image_tensor)
-        img_sv = img.save("../temp_comparison/w" + questions[0]["filename"])
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
 
@@ -210,11 +202,15 @@ for i in range(10):
         loss = torch.nn.functional.cross_entropy(
             logits_vec.unsqueeze(0),
             label_scalar.unsqueeze(0),
-        )    
+        )
+        model.zero_grad()
+        if image_inputs[x].grad is not None:
+            image_inputs[x].grad.zero_()    
         loss.backward()
         signed_grad = torch.sign(image_inputs[x].grad)
-        adv_image = image_inputs[x].clone().detach() + signed_grad
-        adv_image = torch.clamp(adv_image, min=0, max=255)
-        image_inputs[x] = adv_image
+        with torch.no_grad():
+            adv_image = image_inputs[x].clone().detach() + signed_grad
+            adv_image = torch.clamp(adv_image, min=0, max=255)
+            image_inputs[x] = adv_image
 
     print("Success Rate:",successes/len(generated_ids))
