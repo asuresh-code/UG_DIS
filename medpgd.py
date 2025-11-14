@@ -283,10 +283,8 @@ for i in range(iterations):
             final_image = torch.add(component1, component2)
 
             final_image = torch.clamp(final_image, min=0, max=255)
-            new_grey_image_tensor = final_image.float().clone().detach().to(device).requires_grad_(True)
-            grey_image_tensors[x] = new_grey_image_tensor
-            new_image_input_tensor = grey_image_tensors[x].repeat(3,1,1)
-            image_inputs[x] = new_image_input_tensor
+            grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+            image_inputs[x] = grey_image_tensors[x].repeat(3,1,1).requires_grad_(True)
             if x == 0:
                 print("II requires grad:", image_inputs[x].requires_grad)
                 print("II grad value:",image_inputs[x].grad)
