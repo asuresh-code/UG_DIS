@@ -216,6 +216,12 @@ for i in range(iterations):
         )
         model.zero_grad()
         loss.backward()
+
+        print(grey_image_tensors[x].requires_grad)
+        print(grey_image_tensors[x].grad)
+        print(grey_image_tensors[x].is_leaf)
+        print(grey_image_tensors[x].grad_fn)
+
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
         with torch.no_grad():
