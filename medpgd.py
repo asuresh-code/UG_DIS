@@ -138,16 +138,25 @@ text = [processor.apply_chat_template(message, tokenize=False, add_generation_pr
 image_inputs = []
 video_inputs = []
 count = 0
+lower_bound_budgets = []
+upper_bound_budgets = []
+total_budget = 5
+iterations = 10
+alpha = 2
 for message in messages:
     count += 1
     image_input, video_input = process_vision_info(message)
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     image_tensor = image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    lower_bound_image_tensor = image_tensor.clone().detach() - total_budget
+    upper_bound_image_tensor = image_tensor.clone().detach() + total_budget
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
+    lower_bound_budgets.append(lower_bound_image_tensor)
+    upper_bound_budgets.append(upper_bound_image_tensor)
 
-for i in range(10):
+for i in range(iterations):
     inputs = []
     for x in range(len(image_inputs)):
         input = processor(
@@ -175,8 +184,6 @@ for i in range(10):
     successes = 0
     for x in range(len(generated_ids)):
         output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        if x == 0:
-            print(output_text)
         output_texts.append(output_text)
 
     for x in range(len(generated_ids)):
@@ -203,18 +210,30 @@ for i in range(10):
             logits_vec.unsqueeze(0),
             label_scalar.unsqueeze(0),
         )
-        print(loss)
         model.zero_grad()
         loss.backward()
-        print(f"is leaf?: {image_inputs[x].is_leaf}")
-        print(f"requires grad?: {image_inputs[x].requires_grad}") 
-        print(f"grad fn?: {image_inputs[x].grad_fn}")
-        print(f"grad?: {image_inputs[x].grad}") 
         signed_grad = torch.sign(image_inputs[x].grad)
         image_inputs[x].grad = None
         with torch.no_grad():
-            adv_image = image_inputs[x].clone().detach() + signed_grad
-            adv_image = torch.clamp(adv_image, min=0, max=255)
-            image_inputs[x] = adv_image.requires_grad_(True)
+            adv_image = image_inputs[x].clone().detach() + signed_grad*alpha
+
+            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
+            non_lower_bound_pos = torch.logical_not(lower_bound_pos)
+
+            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
+            component2 = torch.multiply(non_lower_bound_pos, adv_image)
+
+            final_image = torch.add(component1, component2)
+
+            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
+            non_upper_bound_pos = torch.logical_not(upper_bound_pos)
+
+            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
+            component2 = torch.multiply(non_upper_bound_pos, final_image)
+
+            final_image = torch.add(component1, component2)
+
+            final_image = torch.clamp(final_image, min=0, max=255)
+            image_inputs[x] = final_image.requires_grad_(True)
 
     print("Success Rate:",successes/len(generated_ids))
