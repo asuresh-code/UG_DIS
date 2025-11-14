@@ -284,6 +284,13 @@ for i in range(iterations):
 
             final_image = torch.clamp(final_image, min=0, max=255)
             grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+            if x == 0:
+                print("GI requires grad:", grey_image_tensors[x].requires_grad)
+                print("GI grad value:",grey_image_tensors[x].grad)
+                print("GI is leaf:",grey_image_tensors[x].is_leaf)
+                print("GI grad function:",grey_image_tensors[x].grad_fn)
+                print("GI device:",grey_image_tensors[x].device)
+
             image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
             if x == 0:
                 print("II requires grad:", image_inputs[x].requires_grad)
