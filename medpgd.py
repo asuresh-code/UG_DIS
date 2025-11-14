@@ -215,7 +215,7 @@ for i in range(iterations):
             label_scalar.unsqueeze(0),
         )
         model.zero_grad()
-        if i == 1 and x == 0:
+        if x == 0:
             print("BEFORE")
             print("GI requires grad:", grey_image_tensors[x].requires_grad)
             print("GI grad value:",grey_image_tensors[x].grad)
@@ -238,7 +238,7 @@ for i in range(iterations):
             print("Logits grad function:",generated_ids_grad[x]["logits"].grad_fn)
             print("Logits device:",generated_ids_grad[x]["logits"].device)
         loss.backward()
-        if i == 1 and x == 0:
+        if x == 0:
             print("AFTER")
             print("GI requires grad:", grey_image_tensors[x].requires_grad)
             print("GI grad value:",grey_image_tensors[x].grad)
