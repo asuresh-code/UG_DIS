@@ -209,7 +209,7 @@ for i in range(iterations):
                 successes += 1
         logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
-        label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer))
+        label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer)).to(device)
         loss = torch.nn.functional.cross_entropy(
             logits_vec.unsqueeze(0),
             label_scalar.unsqueeze(0),
