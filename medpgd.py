@@ -224,28 +224,28 @@ for i in range(iterations):
 
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
-        with torch.no_grad():
-            adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
+        """    with torch.no_grad(): """
+        adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
 
-            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
-            non_lower_bound_pos = torch.logical_not(lower_bound_pos)
+        lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
+        non_lower_bound_pos = torch.logical_not(lower_bound_pos)
 
-            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
-            component2 = torch.multiply(non_lower_bound_pos, adv_image)
+        component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
+        component2 = torch.multiply(non_lower_bound_pos, adv_image)
 
-            final_image = torch.add(component1, component2)
+        final_image = torch.add(component1, component2)
 
-            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
-            non_upper_bound_pos = torch.logical_not(upper_bound_pos)
+        upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
+        non_upper_bound_pos = torch.logical_not(upper_bound_pos)
 
-            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
-            component2 = torch.multiply(non_upper_bound_pos, final_image)
+        component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
+        component2 = torch.multiply(non_upper_bound_pos, final_image)
 
-            final_image = torch.add(component1, component2)
+        final_image = torch.add(component1, component2)
 
-            final_image = torch.clamp(final_image, min=0, max=255)
-            grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-            image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
+        final_image = torch.clamp(final_image, min=0, max=255)
+        grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+        image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
 
