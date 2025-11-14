@@ -106,7 +106,7 @@ def find_answer_token(token_list):
             if token_list[i] != ">":
                 if len(token_list[i]) > 1 and ord(token_list[i][1]) == 266:
                     continue
-                """ print(token_list[i]) """
+                print(token_list[i])
                 token_target_pos = i
                 break
         else:
@@ -188,6 +188,8 @@ for i in range(iterations):
     successes = 0
     for x in range(len(generated_ids)):
         output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+        if i == 9:
+            print(output_text)
         output_texts.append(output_text)
 
     for x in range(len(generated_ids)):
@@ -204,7 +206,7 @@ for i in range(iterations):
             actual_answer = questions[x]['solution']
             if len(string_tokens[answer_token_pos]) > 1:
                 actual_answer = ">" + actual_answer
-            """ print(actual_answer) """
+            print(actual_answer)
             if actual_answer == string_tokens[answer_token_pos]:
                 successes += 1
         logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
@@ -215,51 +217,7 @@ for i in range(iterations):
             label_scalar.unsqueeze(0),
         )
         model.zero_grad()
-        if x == 0:
-            print("BEFORE")
-            print("GI requires grad:", grey_image_tensors[x].requires_grad)
-            print("GI grad value:",grey_image_tensors[x].grad)
-            print("GI is leaf:",grey_image_tensors[x].is_leaf)
-            print("GI grad function:",grey_image_tensors[x].grad_fn)
-            print("GI device:",grey_image_tensors[x].device)
-            print("II requires grad:", image_inputs[x].requires_grad)
-            print("II grad value:",image_inputs[x].grad)
-            print("II is leaf:",image_inputs[x].is_leaf)
-            print("II grad function:",image_inputs[x].grad_fn)
-            print("II device:",image_inputs[x].device)
-            print("I requires grad:", inputs[x]['pixel_values'].requires_grad)
-            print("I grad value:",inputs[x]['pixel_values'].grad)
-            print("I is leaf:",inputs[x]['pixel_values'].is_leaf)
-            print("I grad function:",inputs[x]['pixel_values'].grad_fn)
-            print("I device:",inputs[x]['pixel_values'].device)
-            print("Logits requires grad:", generated_ids_grad[x]["logits"].requires_grad)
-            print("Logits grad value:",generated_ids_grad[x]["logits"].grad)
-            print("Logits is leaf:",generated_ids_grad[x]["logits"].is_leaf)
-            print("Logits grad function:",generated_ids_grad[x]["logits"].grad_fn)
-            print("Logits device:",generated_ids_grad[x]["logits"].device)
         loss.backward()
-        if x == 0:
-            print("AFTER")
-            print("GI requires grad:", grey_image_tensors[x].requires_grad)
-            print("GI grad value:",grey_image_tensors[x].grad)
-            print("GI is leaf:",grey_image_tensors[x].is_leaf)
-            print("GI grad function:",grey_image_tensors[x].grad_fn)
-            print("GI device:",grey_image_tensors[x].device)
-            print("II requires grad:", image_inputs[x].requires_grad)
-            print("II grad value:",image_inputs[x].grad)
-            print("II is leaf:",image_inputs[x].is_leaf)
-            print("II grad function:",image_inputs[x].grad_fn)
-            print("II device:",image_inputs[x].device)
-            print("I requires grad:", input['pixel_values'].requires_grad)
-            print("I grad value:",input['pixel_values'].grad)
-            print("I is leaf:",input['pixel_values'].is_leaf)
-            print("I grad function:",input['pixel_values'].grad_fn)
-            print("I device:",input['pixel_values'].device)
-            print("Logits requires grad:", generated_ids_grad[x]["logits"].requires_grad)
-            print("Logits grad value:",generated_ids_grad[x]["logits"].grad)
-            print("Logits is leaf:",generated_ids_grad[x]["logits"].is_leaf)
-            print("Logits grad function:",generated_ids_grad[x]["logits"].grad_fn)
-            print("Logits device:",generated_ids_grad[x]["logits"].device)
 
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
@@ -283,23 +241,10 @@ for i in range(iterations):
 
         final_image = torch.clamp(final_image, min=0, max=255)
         grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        if x == 0:
-            print("GI requires grad:", grey_image_tensors[x].requires_grad)
-            print("GI grad value:",grey_image_tensors[x].grad)
-            print("GI is leaf:",grey_image_tensors[x].is_leaf)
-            print("GI grad function:",grey_image_tensors[x].grad_fn)
-            print("GI device:",grey_image_tensors[x].device)
-
         image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
-        if x == 0:
-            print("II requires grad:", image_inputs[x].requires_grad)
-            print("II grad value:",image_inputs[x].grad)
-            print("II is leaf:",image_inputs[x].is_leaf)
-            print("II grad function:",image_inputs[x].grad_fn)
-            print("II device:",image_inputs[x].device)
 
     print("Success Rate:",successes/len(generated_ids))
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[0])
-sv = img.save("a_image.png")
+sv = img.save(questions[0]["filename"])
