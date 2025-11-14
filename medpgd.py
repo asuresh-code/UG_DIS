@@ -215,6 +215,6 @@ for i in range(10):
         with torch.no_grad():
             adv_image = image_inputs[x].clone().detach() + signed_grad
             adv_image = torch.clamp(adv_image, min=0, max=255)
-            image_inputs[x] = adv_image
+            image_inputs[x] = adv_image.requires_grad_(True)
 
     print("Success Rate:",successes/len(generated_ids))
