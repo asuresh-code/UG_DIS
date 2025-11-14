@@ -215,37 +215,76 @@ for i in range(iterations):
             label_scalar.unsqueeze(0),
         )
         model.zero_grad()
+        if i == 1 and x == 0:
+            print("BEFORE")
+            print("GI requires grad:", grey_image_tensors[x].requires_grad)
+            print("GI grad value:",grey_image_tensors[x].grad)
+            print("GI is leaf:",grey_image_tensors[x].is_leaf)
+            print("GI grad function:",grey_image_tensors[x].grad_fn)
+            print("GI device:",grey_image_tensors[x].device)
+            print("II requires grad:", image_inputs[x].requires_grad)
+            print("II grad value:",image_inputs[x].grad)
+            print("II is leaf:",image_inputs[x].is_leaf)
+            print("II grad function:",image_inputs[x].grad_fn)
+            print("II device:",image_inputs[x].device)
+            print("I requires grad:", inputs[x]['pixel_values'].requires_grad)
+            print("I grad value:",inputs[x]['pixel_values'].grad)
+            print("I is leaf:",inputs[x]['pixel_values'].is_leaf)
+            print("I grad function:",inputs[x]['pixel_values'].grad_fn)
+            print("I device:",inputs[x]['pixel_values'].device)
+            print("Logits requires grad:", generated_ids_grad[x]["logits"].requires_grad)
+            print("Logits grad value:",generated_ids_grad[x]["logits"].grad)
+            print("Logits is leaf:",generated_ids_grad[x]["logits"].is_leaf)
+            print("Logits grad function:",generated_ids_grad[x]["logits"].grad_fn)
+            print("Logits device:",generated_ids_grad[x]["logits"].device)
         loss.backward()
-
-        print(grey_image_tensors[x].requires_grad)
-        print(grey_image_tensors[x].grad)
-        print(grey_image_tensors[x].is_leaf)
-        print(grey_image_tensors[x].grad_fn)
+        if i == 1 and x == 0:
+            print("AFTER")
+            print("GI requires grad:", grey_image_tensors[x].requires_grad)
+            print("GI grad value:",grey_image_tensors[x].grad)
+            print("GI is leaf:",grey_image_tensors[x].is_leaf)
+            print("GI grad function:",grey_image_tensors[x].grad_fn)
+            print("GI device:",grey_image_tensors[x].device)
+            print("II requires grad:", image_inputs[x].requires_grad)
+            print("II grad value:",image_inputs[x].grad)
+            print("II is leaf:",image_inputs[x].is_leaf)
+            print("II grad function:",image_inputs[x].grad_fn)
+            print("II device:",image_inputs[x].device)
+            print("I requires grad:", input['pixel_values'].requires_grad)
+            print("I grad value:",input['pixel_values'].grad)
+            print("I is leaf:",input['pixel_values'].is_leaf)
+            print("I grad function:",input['pixel_values'].grad_fn)
+            print("I device:",input['pixel_values'].device)
+            print("Logits requires grad:", generated_ids_grad[x]["logits"].requires_grad)
+            print("Logits grad value:",generated_ids_grad[x]["logits"].grad)
+            print("Logits is leaf:",generated_ids_grad[x]["logits"].is_leaf)
+            print("Logits grad function:",generated_ids_grad[x]["logits"].grad_fn)
+            print("Logits device:",generated_ids_grad[x]["logits"].device)
 
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
-        """    with torch.no_grad(): """
-        adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
+        with torch.no_grad():
+            adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
 
-        lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
-        non_lower_bound_pos = torch.logical_not(lower_bound_pos)
+            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
+            non_lower_bound_pos = torch.logical_not(lower_bound_pos)
 
-        component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
-        component2 = torch.multiply(non_lower_bound_pos, adv_image)
+            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
+            component2 = torch.multiply(non_lower_bound_pos, adv_image)
 
-        final_image = torch.add(component1, component2)
+            final_image = torch.add(component1, component2)
 
-        upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
-        non_upper_bound_pos = torch.logical_not(upper_bound_pos)
+            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
+            non_upper_bound_pos = torch.logical_not(upper_bound_pos)
 
-        component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
-        component2 = torch.multiply(non_upper_bound_pos, final_image)
+            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
+            component2 = torch.multiply(non_upper_bound_pos, final_image)
 
-        final_image = torch.add(component1, component2)
+            final_image = torch.add(component1, component2)
 
-        final_image = torch.clamp(final_image, min=0, max=255)
-        grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
+            final_image = torch.clamp(final_image, min=0, max=255)
+            grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+            image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
 
