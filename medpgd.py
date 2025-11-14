@@ -244,7 +244,7 @@ for i in range(iterations):
             final_image = torch.add(component1, component2)
 
             final_image = torch.clamp(final_image, min=0, max=255)
-            grey_image_tensors[x] = final_image.requires_grad_(True)
+            grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
             image_inputs[x] = grey_image_tensors[x].repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
