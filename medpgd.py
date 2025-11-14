@@ -284,7 +284,7 @@ for i in range(iterations):
 
             final_image = torch.clamp(final_image, min=0, max=255)
             grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-            image_inputs[x] = grey_image_tensors[x].repeat(3,1,1).requires_grad_(True)
+            image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
             if x == 0:
                 print("II requires grad:", image_inputs[x].requires_grad)
                 print("II grad value:",image_inputs[x].grad)
