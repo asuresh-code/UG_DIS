@@ -203,8 +203,10 @@ for i in range(10):
             logits_vec.unsqueeze(0),
             label_scalar.unsqueeze(0),
         )
+        print(loss)
         model.zero_grad()
         if image_inputs[x].grad is not None:
+            print("resetting grad")
             image_inputs[x].grad.zero_()    
         loss.backward()
         signed_grad = torch.sign(image_inputs[x].grad)
