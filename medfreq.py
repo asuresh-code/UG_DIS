@@ -267,5 +267,5 @@ for i in range(iterations):
     print("Success Rate:",successes/len(generated_ids))
 
 for i in range(len(grey_image_tensors)):
-    orig_image = torch.mean((lower_bound_budgets[i] + upper_bound_budgets[i]))
+    orig_image = torch.div((lower_bound_budgets[i] + upper_bound_budgets[i]), 2)
     print(torch.mean(torch.abs((grey_image_tensors[i] - orig_image))))
