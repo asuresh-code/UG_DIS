@@ -233,7 +233,7 @@ for i in range(iterations):
         print("factor:", factor)
 
         new_freq_tensor = frequency_image_tensors[x].clone().detach() + signed_grad_freq*factor
-        print("2 FREQ TESNRO:", new_freq_tensor)
+        print("2 FREQ TESNRO:", new_freq_tensor.shape)
 
         adv_image = torch.fft.ifft2(new_freq_tensor).real.unsqueeze(0)
         print("3:", adv_image.shape)
