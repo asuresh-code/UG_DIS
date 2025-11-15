@@ -257,7 +257,7 @@ for i in range(iterations):
 
         final_image = torch.clamp(final_image, min=0, max=255)
 
-        frequency_image_tensors[x] = torch.fft.fft2(final_image).float().clone().detach().to(device).requires_grad_(True)
+        frequency_image_tensors[x] = torch.squeeze(torch.fft.fft2(final_image).float().clone()).detach().to(device).requires_grad_(True)
         print("3 FREQ IMAGE TENSRO:", frequency_image_tensors[x].shape)
         inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x]).real
         print("4:", inversed_tensor.shape)
