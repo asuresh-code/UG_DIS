@@ -150,7 +150,7 @@ for message in messages:
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     freq_image_tensor = torch.fft.fft2(image_tensor[0]).float().clone().detach().to(device).requires_grad_(True)
-    inversed_tensor = torch.fft.ifft2(freq_image_tensor).rea
+    inversed_tensor = torch.fft.ifft2(freq_image_tensor).real
     print(inversed_tensor.shape)
     grey_image_tensor = inversed_tensor.unsqueeze(0)
     image_tensor = grey_image_tensor.repeat(3,1,1)
