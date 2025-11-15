@@ -150,7 +150,7 @@ for message in messages:
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     freq_image_tensor = torch.fft.fft2(image_tensor[0]).float().clone().detach().to(device).requires_grad_(True)
-    inversed_tensor = torch.fft.ifft2(freq_image_tensor)
+    inversed_tensor = torch.fft.ifft2(freq_image_tensor).real
     grey_image_tensor = inversed_tensor.unsqueeze(0)
     image_tensor = grey_image_tensor.repeat(3,1,1)
     lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
@@ -225,13 +225,13 @@ for i in range(iterations):
 
         frequency_image_tensors[x].grad = None
 
-        base_signed_pix = torch.fft.ifft2(signed_grad_freq)
+        base_signed_pix = torch.fft.ifft2(signed_grad_freq).real
 
         factor = 2.0 / torch.max(base_signed_pix)
 
         new_freq_tensor = frequency_image_tensors[x].clone().detach() + signed_grad_freq*factor
 
-        adv_image = torch.fft.ifft2(new_freq_tensor)
+        adv_image = torch.fft.ifft2(new_freq_tensor).real
 
         lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
         non_lower_bound_pos = torch.logical_not(lower_bound_pos)
@@ -252,7 +252,7 @@ for i in range(iterations):
         final_image = torch.clamp(final_image, min=0, max=255)
 
         frequency_image_tensors[x] = torch.fft.fft2(final_image).float().clone().detach().to(device).requires_grad_(True)
-        inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x])
+        inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x]).real
         grey_image_tensors[x] = inversed_tensor.unsqueeze(0)
         image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
 
