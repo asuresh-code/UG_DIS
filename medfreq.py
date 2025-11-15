@@ -266,6 +266,7 @@ for i in range(iterations):
 
     print("Success Rate:",successes/len(generated_ids))
 
+print(abs((grey_image_tensors[0] - upper_bound_pos).argmax()))
 transform = transforms.ToPILImage()
 img = transform(image_inputs[0].to(torch.uint8))
 sv = img.save(questions[0]["filename"])
