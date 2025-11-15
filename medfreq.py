@@ -233,8 +233,9 @@ for i in range(iterations):
 
         new_freq_tensor = frequency_image_tensors[x].clone().detach() + signed_grad_freq*factor
 
-        adv_image = torch.fft.ifft2(new_freq_tensor).real
+        adv_image = torch.fft.ifft2(new_freq_tensor).real.unsqueeze(0)
         print("3:", adv_image.shape)
+        print("lbb:", lower_bound_budgets[x].shape)
 
         lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
         non_lower_bound_pos = torch.logical_not(lower_bound_pos)
