@@ -150,6 +150,7 @@ for message in messages:
     transform = transforms.Compose([transforms.PILToTensor()])
     image_tensor = transform(image_input[0])
     freq_image_tensor = torch.fft.fft2(image_tensor[0]).float().clone().detach().to(device).requires_grad_(True)
+    print("FREQ 1:", freq_image_tensor.shape)
     inversed_tensor = torch.fft.ifft2(freq_image_tensor).real
     grey_image_tensor = inversed_tensor.unsqueeze(0)
     print("1: ", grey_image_tensor)
@@ -232,6 +233,7 @@ for i in range(iterations):
         print("factor:", factor)
 
         new_freq_tensor = frequency_image_tensors[x].clone().detach() + signed_grad_freq*factor
+        print("2 FREQ TESNRO:", new_freq_tensor)
 
         adv_image = torch.fft.ifft2(new_freq_tensor).real.unsqueeze(0)
         print("3:", adv_image.shape)
@@ -256,6 +258,7 @@ for i in range(iterations):
         final_image = torch.clamp(final_image, min=0, max=255)
 
         frequency_image_tensors[x] = torch.fft.fft2(final_image).float().clone().detach().to(device).requires_grad_(True)
+        print("3 FREQ IMAGE TENSRO:", frequency_image_tensors[x].shape)
         inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x]).real
         print("4:", inversed_tensor.shape)
         grey_image_tensors[x] = inversed_tensor
