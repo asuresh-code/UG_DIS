@@ -151,6 +151,7 @@ for message in messages:
     grey_image_tensor = image_tensor[0]
     grey_image_tensor = grey_image_tensor[None, :, :]
     grey_image_tensor = grey_image_tensor.float().clone().detach().to(device).requires_grad_(True)
+    print("1: ", grey_image_tensor.shape)
     image_tensor = grey_image_tensor.repeat(3,1,1)
     lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
     upper_bound_image_tensor = grey_image_tensor.clone().detach() + total_budget
@@ -222,6 +223,7 @@ for i in range(iterations):
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
         adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
+        print("3: ", adv_image.shape)
 
         lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
         non_lower_bound_pos = torch.logical_not(lower_bound_pos)
@@ -241,6 +243,7 @@ for i in range(iterations):
 
         final_image = torch.clamp(final_image, min=0, max=255)
         grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+        print("4:", grey_image_tensors[x].shape)
         image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
