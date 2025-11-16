@@ -248,6 +248,6 @@ for i in range(iterations):
 
     print("Success Rate:",successes/len(generated_ids))
 
-transform = transforms.ToPILImage()
-img = transform(image_inputs[0].to(torch.uint8))
-sv = img.save(questions[0]["filename"])
+for i in range(len(grey_image_tensors)):
+    orig_image = torch.div((lower_bound_budgets[i] + upper_bound_budgets[i]), 2)
+    print(torch.mean(torch.abs((grey_image_tensors[i] - orig_image))))
