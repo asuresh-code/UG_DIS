@@ -12,7 +12,7 @@ df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluati
 files_in_use = os.listdir(f"../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
-df = df.head(10)
+df = df.head(100)
 
 start_tag = [27,9217,29]
 end_tag = [522,9217,29]
@@ -143,6 +143,15 @@ upper_bound_budgets = []
 total_budget = 5
 iterations = 10
 alpha = 2
+
+incorrect_index = None
+logits_total_start = [-1]*len(questions)
+logits_max_start = [-1]*len(questions)
+logits_total_end = 0
+logits_max_end = 0
+logits_was_true = [False]*len(questions)
+answer_end = ""
+
 for message in messages:
     count += 1
     image_input, video_input = process_vision_info(message)
@@ -163,6 +172,7 @@ for message in messages:
 
 for i in range(iterations):
     inputs = []
+    incorrect_index = None
     for x in range(len(image_inputs)):
         input = processor(
             text=text[x],
@@ -210,6 +220,16 @@ for i in range(iterations):
             print(actual_answer)
             if actual_answer == string_tokens[answer_token_pos]:
                 successes += 1
+                if i == 0:
+                    logits_was_true[x] = True
+                    logits_max_start[x] = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                    logits_total_start[x] = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+            else:
+                if i == len(questions)-1 and incorrect_index is None and logits_was_true[x] is True:
+                    incorrect_index = x
+                    logits_max_end = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                    logits_total_end = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                    answer_end = string_tokens[answer_token_pos]
         logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
         label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer)).to(device)
@@ -248,6 +268,17 @@ for i in range(iterations):
 
     print("Success Rate:",successes/len(generated_ids))
 
-for i in range(len(grey_image_tensors)):
-    orig_image = torch.div((lower_bound_budgets[i] + upper_bound_budgets[i]), 2)
-    print(torch.mean(torch.abs((grey_image_tensors[i] - orig_image))))
+
+orig_image = torch.div((lower_bound_budgets[incorrect_index] + upper_bound_budgets[incorrect_index]), 2)
+print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
+
+transform = transforms.ToPILImage()
+img = transform(image_inputs[incorrect_index].to(torch.uint8))
+sv = img.save(questions[incorrect_index]["filename"])
+
+print("Problem:", questions[incorrect_index]["problem"])
+print("Solution:", questions[incorrect_index]["solution"])
+print("Answer:", questions[incorrect_index]["answer"])
+print("The initital confidence was:", logits_max_start[incorrect_index]/logits_total_start[incorrect_index])
+print("The new answer is:", answer_end)
+print("The new confidence is:", logits_max_end[incorrect_index]/logits_total_end[incorrect_index])
