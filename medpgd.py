@@ -106,7 +106,6 @@ def find_answer_token(token_list):
             if token_list[i] != ">":
                 if len(token_list[i]) > 1 and ord(token_list[i][1]) == 266:
                     continue
-                print(token_list[i])
                 token_target_pos = i
                 break
         else:
@@ -160,7 +159,6 @@ for message in messages:
     grey_image_tensor = image_tensor[0]
     grey_image_tensor = grey_image_tensor[None, :, :]
     grey_image_tensor = grey_image_tensor.float().clone().detach().to(device).requires_grad_(True)
-    print("1: ", grey_image_tensor.shape)
     image_tensor = grey_image_tensor.repeat(3,1,1)
     lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
     upper_bound_image_tensor = grey_image_tensor.clone().detach() + total_budget
@@ -199,8 +197,6 @@ for i in range(iterations):
     successes = 0
     for x in range(len(generated_ids)):
         output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        if i == 9:
-            print(output_text)
         output_texts.append(output_text)
 
     for x in range(len(generated_ids)):
@@ -211,13 +207,11 @@ for i in range(iterations):
         string_tokens = tokenizer.convert_ids_to_tokens(sequence)
         answer_token_pos = find_answer_token(string_tokens)
         if answer_token_pos == -1:
-            print("No answer found")
             continue
         else:
             actual_answer = questions[x]['solution']
             if len(string_tokens[answer_token_pos]) > 1:
                 actual_answer = ">" + actual_answer
-            print(actual_answer)
             if actual_answer == string_tokens[answer_token_pos]:
                 successes += 1
                 if i == 0:
@@ -243,7 +237,6 @@ for i in range(iterations):
         signed_grad = torch.sign(grey_image_tensors[x].grad)
         grey_image_tensors[x].grad = None
         adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
-        print("3: ", adv_image.shape)
 
         lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
         non_lower_bound_pos = torch.logical_not(lower_bound_pos)
@@ -263,7 +256,6 @@ for i in range(iterations):
 
         final_image = torch.clamp(final_image, min=0, max=255)
         grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        print("4:", grey_image_tensors[x].shape)
         image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
 
     print("Success Rate:",successes/len(generated_ids))
