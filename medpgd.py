@@ -20,6 +20,8 @@ end_tag = [522,9217,29]
 torch.set_grad_enabled(True)
 torch.autograd.set_detect_anomaly(True)
 
+m = torch.nn.Softmax()
+
 def splice_tokens(token_list):
     return_list = []
     start_found = [False, False, False]
@@ -219,13 +221,13 @@ for b in range(10):
                     successes += 1
                     if i == 0:
                         logits_was_true[x + b*10] = True
-                        logits_max_start[x + b*10] = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                        logits_total_start[x + b*10] = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_total_start[x + b*10] = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_max_start[x + b*10] = max(logits_total_start[x + b*10])
                 else:
                     if i == iterations-1 and incorrect_index is None and logits_was_true[x + b*10] is True:
                         incorrect_index = x + b*10
-                        logits_max_end = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                        logits_total_end = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_total_end = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_max_end = max(logits_total_end)
                         answer_end = string_tokens[answer_token_pos]
             logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
@@ -276,11 +278,11 @@ transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save(questions[incorrect_index]["filename"])
 
+print("The initial overall success rate:", initial_successes)
+print("The end overall success rate:", end_successess)
 print("Problem:", questions[incorrect_index]["problem"])
 print("Solution:", questions[incorrect_index]["solution"])
 print("Answer:", questions[incorrect_index]["answer"])
-print("The initital confidence was:", logits_max_start[incorrect_index]/logits_total_start[incorrect_index])
+print("The initital confidence was:", logits_max_start[incorrect_index])
 print("The new answer is:", answer_end)
-print("The new confidence is:", logits_max_end[incorrect_index]/logits_total_end[incorrect_index])
-print("The initial overall success rate:", initial_successes)
-print("The end overall success rate:", end_successess)
+print("The new confidence is:", logits_max_end)
