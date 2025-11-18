@@ -150,6 +150,9 @@ logits_total_end = 0
 logits_max_end = 0
 logits_was_true = [False]*len(questions)
 answer_end = ""
+incorrect_index = None
+start_success_rates = []
+end_success_rates = []
 
 for message in messages:
     count += 1
@@ -168,98 +171,103 @@ for message in messages:
     upper_bound_budgets.append(upper_bound_image_tensor)
     grey_image_tensors.append(grey_image_tensor)
 
-for i in range(iterations):
-    inputs = []
-    incorrect_index = None
-    for x in range(len(image_inputs)):
-        input = processor(
-            text=text[x],
-            images=image_inputs[x],
-            videos=video_inputs[x],
-            padding=True,
-            return_tensors="pt",
-        ).to("cuda")
-        inputs.append(input)
+for b in range(10):
+    for i in range(iterations):
+        inputs = []
+        for x in range(10*b, 10*(b+1)):
+            input = processor(
+                text=text[x],
+                images=image_inputs[x],
+                videos=video_inputs[x],
+                padding=True,
+                return_tensors="pt",
+            ).to("cuda")
+            inputs.append(input)
 
-    generated_ids = []
-    generated_ids_grad = []
-    for input in inputs:
-        generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
-        sequence = generated_id['sequences']
-        sequence.clone().detach()
-        sequence = sequence.to(device)
-        attention_mask = torch.ones_like(sequence)
-        generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
-        generated_ids.append(generated_id)
-        generated_ids_grad.append(generated_id_grad)
+        generated_ids = []
+        generated_ids_grad = []
+        for input in inputs:
+            generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+            sequence = generated_id['sequences']
+            sequence.clone().detach()
+            sequence = sequence.to(device)
+            attention_mask = torch.ones_like(sequence)
+            generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
+            generated_ids.append(generated_id)
+            generated_ids_grad.append(generated_id_grad)
 
-    output_texts = []
-    successes = 0
-    for x in range(len(generated_ids)):
-        output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        output_texts.append(output_text)
+        output_texts = []
+        successes = 0
+        for x in range(len(generated_ids)):
+            output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+            output_texts.append(output_text)
 
-    for x in range(len(generated_ids)):
-        sequence = []
-        for token in generated_ids_grad[x]['logits'][0]:
-            sequence.append(token.argmax())
-        tokenizer = processor.tokenizer
-        string_tokens = tokenizer.convert_ids_to_tokens(sequence)
-        answer_token_pos = find_answer_token(string_tokens)
-        if answer_token_pos == -1:
-            continue
-        else:
-            actual_answer = questions[x]['solution']
-            if len(string_tokens[answer_token_pos]) > 1:
-                actual_answer = ">" + actual_answer
-            if actual_answer == string_tokens[answer_token_pos]:
-                successes += 1
-                if i == 0:
-                    logits_was_true[x] = True
-                    logits_max_start[x] = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                    logits_total_start[x] = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+        for x in range(len(generated_ids)):
+            sequence = []
+            for token in generated_ids_grad[x]['logits'][0]:
+                sequence.append(token.argmax())
+            tokenizer = processor.tokenizer
+            string_tokens = tokenizer.convert_ids_to_tokens(sequence)
+            answer_token_pos = find_answer_token(string_tokens)
+            if answer_token_pos == -1:
+                continue
             else:
-                if i == len(questions)-1 and incorrect_index is None and logits_was_true[x] is True:
-                    incorrect_index = x
-                    logits_max_end = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                    logits_total_end = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                    answer_end = string_tokens[answer_token_pos]
-        logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
+                actual_answer = questions[x + b*10]['solution']
+                if len(string_tokens[answer_token_pos]) > 1:
+                    actual_answer = ">" + actual_answer
+                if actual_answer == string_tokens[answer_token_pos]:
+                    successes += 1
+                    if i == 0:
+                        logits_was_true[x + b*10] = True
+                        logits_max_start[x + b*10] = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_total_start[x + b*10] = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                else:
+                    if i == iterations-1 and incorrect_index is None and logits_was_true[x + b*10] is True:
+                        incorrect_index = x + b*10
+                        logits_max_end = max(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_total_end = sum(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        answer_end = string_tokens[answer_token_pos]
+            logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
-        label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer)).to(device)
-        loss = torch.nn.functional.cross_entropy(
-            logits_vec.unsqueeze(0),
-            label_scalar.unsqueeze(0),
-        )
-        model.zero_grad()
-        loss.backward()
+            label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer)).to(device)
+            loss = torch.nn.functional.cross_entropy(
+                logits_vec.unsqueeze(0),
+                label_scalar.unsqueeze(0),
+            )
+            model.zero_grad()
+            loss.backward()
 
-        signed_grad = torch.sign(grey_image_tensors[x].grad)
-        grey_image_tensors[x].grad = None
-        adv_image = grey_image_tensors[x].clone().detach() + signed_grad*alpha
+            signed_grad = torch.sign(grey_image_tensors[x + b*10].grad)
+            grey_image_tensors[x + b*10].grad = None
+            adv_image = grey_image_tensors[x + b*10].clone().detach() + signed_grad*alpha
 
-        lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
-        non_lower_bound_pos = torch.logical_not(lower_bound_pos)
+            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x + b*10])
+            non_lower_bound_pos = torch.logical_not(lower_bound_pos)
 
-        component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
-        component2 = torch.multiply(non_lower_bound_pos, adv_image)
+            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x + b*10])
+            component2 = torch.multiply(non_lower_bound_pos, adv_image)
 
-        final_image = torch.add(component1, component2)
+            final_image = torch.add(component1, component2)
 
-        upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
-        non_upper_bound_pos = torch.logical_not(upper_bound_pos)
+            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x + b*10])
+            non_upper_bound_pos = torch.logical_not(upper_bound_pos)
 
-        component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
-        component2 = torch.multiply(non_upper_bound_pos, final_image)
+            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x + b*10])
+            component2 = torch.multiply(non_upper_bound_pos, final_image)
 
-        final_image = torch.add(component1, component2)
+            final_image = torch.add(component1, component2)
 
-        final_image = torch.clamp(final_image, min=0, max=255)
-        grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
+            final_image = torch.clamp(final_image, min=0, max=255)
+            grey_image_tensors[x + b*10] = final_image.float().clone().detach().to(device).requires_grad_(True)
+            image_inputs[x + b*10] = grey_image_tensors[x + b*10].clone().repeat(3,1,1)
 
-    print("Success Rate:",successes/len(generated_ids))
+        if i == 0:
+            start_success_rates.append(successes/len(generated_ids))
+        if i == iterations - 1:
+            end_success_rates.append(successes/len(generated_ids))
 
+initial_successes = sum(start_success_rates)/len(start_success_rates)
+end_successess = sum(end_success_rates)/len(end_success_rates)
 
 orig_image = torch.div((lower_bound_budgets[incorrect_index] + upper_bound_budgets[incorrect_index]), 2)
 print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
@@ -274,3 +282,5 @@ print("Answer:", questions[incorrect_index]["answer"])
 print("The initital confidence was:", logits_max_start[incorrect_index]/logits_total_start[incorrect_index])
 print("The new answer is:", answer_end)
 print("The new confidence is:", logits_max_end[incorrect_index]/logits_total_end[incorrect_index])
+print("The initial overall success rate:", initial_successes)
+print("The end overall success rate:", end_successess)
