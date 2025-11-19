@@ -12,7 +12,7 @@ df = pd.read_json("hf://datasets/FreedomIntelligence/Medical_Multimodal_Evaluati
 files_in_use = os.listdir(f"../image_mri/test")
 adjusted_files_in_use = [["images/" + file] for file in files_in_use]
 df = df.drop(df[~df['image'].isin(adjusted_files_in_use)].index)
-df = df.head(100)
+df = df.head(20)
 
 start_tag = [27,9217,29]
 end_tag = [522,9217,29]
@@ -294,10 +294,10 @@ top10 = torch.topk(logits_total_start[incorrect_index], 10)
 print("The original top 10 terms make up")
 print(sum(top10[0]))
 for i in range(10):
-    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i]), " Prob:", top10[0][i])
+    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i].unsqueeze(0)), " Prob:", top10[0][i])
 
 top10 = torch.topk(logits_total_end, 10)
 print("The original top 10 terms make up")
 print(sum(top10[0]))
 for i in range(10):
-    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i]), " Prob:", top10[0][i])
+    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i].unsqueeze(0)), " Prob:", top10[0][i])
