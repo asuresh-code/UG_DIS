@@ -302,3 +302,15 @@ print("Answer:", questions[incorrect_index]["answer"])
 print("The initital confidence was:", logits_max_start[incorrect_index])
 print("The new answer is:", answer_end)
 print("The new confidence is:", logits_max_end)
+
+top10 = torch.topk(logits_total_start[incorrect_index], 10)
+print("The original top 10 terms make up")
+print(sum(top10[0]))
+for i in range(10):
+    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i].unsqueeze(0)), " Prob:", top10[0][i])
+
+top10 = torch.topk(logits_total_end, 10)
+print("The original top 10 terms make up")
+print(sum(top10[0]))
+for i in range(10):
+    print("Value:", tokenizer.convert_ids_to_tokens(top10[1][i].unsqueeze(0)), " Prob:", top10[0][i])
