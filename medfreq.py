@@ -159,6 +159,8 @@ incorrect_index = None
 start_success_rates = []
 end_success_rates = []
 
+loop = 0
+
 for message in messages:
     count += 1
     image_input, video_input = process_vision_info(message)
@@ -236,6 +238,7 @@ for b in range(10):
                         logits_total_end = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
                         logits_max_end = max(logits_total_end)
                         answer_end = string_tokens[answer_token_pos]
+                        loop = b
             logits_vec = generated_ids_grad[x]["logits"][0, answer_token_pos, :] 
 
             label_scalar = torch.tensor(tokenizer.convert_tokens_to_ids(actual_answer)).to(device)
@@ -294,6 +297,7 @@ print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
 print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image_inputs[incorrect_index]))))
 print(torch.max(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
 
+print("BATCH:", b)
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
