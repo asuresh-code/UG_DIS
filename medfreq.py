@@ -170,7 +170,7 @@ for message in messages:
     image_tensor = grey_image_tensor.repeat(3,1,1)
     lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
     upper_bound_image_tensor = grey_image_tensor.clone().detach() + total_budget
-    orig_image_inputs.append(image_tensor.clone().detach())
+    orig_image_inputs.append(grey_image_tensor.clone().detach())
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
     lower_bound_budgets.append(lower_bound_image_tensor)
@@ -291,12 +291,13 @@ end_successess = sum(end_success_rates)/len(end_success_rates)
 
 orig_image = torch.div((lower_bound_budgets[incorrect_index] + upper_bound_budgets[incorrect_index]), 2)
 print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
+print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image_inputs[incorrect_index]))))
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save("freq2" + questions[incorrect_index]["filename"])
 
-img = transform(orig_image_inputs[incorrect_index].to(torch.uint8))
+img = transform(orig_image_inputs[incorrect_index].repeat(3,1,1).to(torch.uint8))
 sv = img.save("freq1" + questions[incorrect_index]["filename"])
 
 print("The initial overall success rate:", initial_successes)
