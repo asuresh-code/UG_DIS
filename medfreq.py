@@ -218,7 +218,7 @@ for b in range(10):
                 print("No answer found")
                 continue
             else:
-                actual_answer = questions[x]['solution']
+                actual_answer = questions[x + b*10]['solution']
                 if len(string_tokens[answer_token_pos]) > 1:
                     actual_answer = ">" + actual_answer
                 print(actual_answer)
@@ -246,38 +246,38 @@ for b in range(10):
 
             signed_grad_freq = torch.sign(frequency_image_tensors[x].grad)
 
-            frequency_image_tensors[x].grad = None
+            frequency_image_tensors[x + b*10].grad = None
 
             base_signed_pix = torch.fft.ifft2(signed_grad_freq).real
 
             factor = 2.0 / torch.max(base_signed_pix)
 
-            new_freq_tensor = frequency_image_tensors[x].clone().detach() + signed_grad_freq*factor
+            new_freq_tensor = frequency_image_tensors[x + b*10].clone().detach() + signed_grad_freq*factor
 
             adv_image = torch.fft.ifft2(new_freq_tensor).real.unsqueeze(0)
 
-            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x])
+            lower_bound_pos = torch.lt(adv_image, lower_bound_budgets[x + b*10])
             non_lower_bound_pos = torch.logical_not(lower_bound_pos)
 
-            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x])
+            component1 = torch.multiply(lower_bound_pos, lower_bound_budgets[x + b*10])
             component2 = torch.multiply(non_lower_bound_pos, adv_image)
 
             final_image = torch.add(component1, component2)
 
-            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x])
+            upper_bound_pos = torch.gt(final_image, upper_bound_budgets[x + b*10])
             non_upper_bound_pos = torch.logical_not(upper_bound_pos)
 
-            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x])
+            component1 = torch.multiply(upper_bound_pos, upper_bound_budgets[x + b*10])
             component2 = torch.multiply(non_upper_bound_pos, final_image)
 
             final_image = torch.add(component1, component2)
 
             final_image = torch.clamp(final_image, min=0, max=255)
 
-            frequency_image_tensors[x] = torch.squeeze(torch.fft.fft2(final_image).float().clone()).detach().to(device).requires_grad_(True)
-            inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x]).real
-            grey_image_tensors[x] = inversed_tensor
-            image_inputs[x] = grey_image_tensors[x].clone().repeat(3,1,1)
+            frequency_image_tensors[x + b*10] = torch.squeeze(torch.fft.fft2(final_image).float().clone()).detach().to(device).requires_grad_(True)
+            inversed_tensor = torch.fft.ifft2(frequency_image_tensors[x + b*10]).real
+            grey_image_tensors[x + b*10] = inversed_tensor
+            image_inputs[x + b*10] = grey_image_tensors[x + b*10].clone().repeat(3,1,1)
 
         if i == 0:
             start_success_rates.append(successes/len(generated_ids))

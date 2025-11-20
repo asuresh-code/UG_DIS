@@ -173,7 +173,7 @@ for message in messages:
     upper_bound_budgets.append(upper_bound_image_tensor)
     grey_image_tensors.append(grey_image_tensor)
 
-for b in range(2):
+for b in range(10):
     for i in range(iterations):
         inputs = []
         for x in range(10*b, 10*(b+1)):
