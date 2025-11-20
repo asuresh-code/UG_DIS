@@ -285,13 +285,14 @@ for b in range(10):
                     answer_end = string_tokens[answer_token_pos]
     end_success_rates.append(successes/len(generated_ids))
 
-    for x in range(10):
-        del video_inputs[x]
-        del grey_image_tensors[x]
-        del text[x]
-        del inputs[x]
-        del generated_ids[x]
-        del generated_ids_grad[x]
+    if b != 9:
+        for x in range(10):
+            del video_inputs[0]
+            del grey_image_tensors[0]
+            del text[0]
+            del inputs[0]
+            del generated_ids[0]
+            del generated_ids_grad[0]
 
 
 initial_successes = sum(start_success_rates)/len(start_success_rates)

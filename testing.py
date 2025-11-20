@@ -8,31 +8,24 @@ files_in_use = os.listdir(f"C:/Users/sures/Downloads/test")
 file1_in_use = "C:/Users/sures/Downloads/freq1mrabd023312.png"
 file2_in_use = "C:/Users/sures/Downloads/freq2mrabd023312.png"
 
-
-file3_in_use = "C:/Users/sures/Downloads/mrabd023312.png"
-
-adv1_image = Image.open(file3_in_use)
+adv1_image = Image.open(file1_in_use)
+adv2_image = Image.open(file2_in_use)
 
 transform = transforms.Compose([
     transforms.PILToTensor()
 ])
 
 adv1_img_tensor = transform(adv1_image)
+adv2_img_tensor = transform(adv2_image)
 
-ntan1 = adv1_img_tensor.clone()[0]
-ntan2 = adv1_img_tensor.clone()[1]
-ntan3 = adv1_img_tensor.clone()[2]
+print(adv1_img_tensor.shape)
+print(set(torch.abs(adv1_img_tensor - adv2_img_tensor).flatten().tolist()))
 
-newt1 = ntan1.repeat(3,1,1)
-newt2 = ntan2.repeat(3,1,1)
-newt3 = ntan3.repeat(3,1,1)
+diff1 = torch.mean(torch.abs(adv1_img_tensor - adv2_img_tensor))
+diff2 = torch.max(torch.abs(adv1_img_tensor - adv2_img_tensor))
 
-transform = transforms.ToPILImage()
-img = transform(newt1.to(torch.uint8))
-sv = img.save("newt1.png")
+print(diff1)
+print(diff2)
 
-img = transform(newt2.to(torch.uint8))
-sv = img.save("newt2.png")
-
-img = transform(newt3.to(torch.uint8))
-sv = img.save("newt3.png")
+print(adv1_img_tensor.shape)
+print(adv2_img_tensor.shape)
