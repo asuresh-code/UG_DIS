@@ -292,7 +292,7 @@ print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
-sv = img.save(questions[incorrect_index]["filename"])
+sv = img.save("freq" + questions[incorrect_index]["filename"])
 
 print("The initial overall success rate:", initial_successes)
 print("The end overall success rate:", end_successess)
