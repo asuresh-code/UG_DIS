@@ -244,7 +244,7 @@ for b in range(10):
             model.zero_grad()
             loss.backward()
 
-            signed_grad_freq = torch.sign(frequency_image_tensors[x].grad)
+            signed_grad_freq = torch.sign(frequency_image_tensors[x + b*10].grad)
 
             frequency_image_tensors[x + b*10].grad = None
 
