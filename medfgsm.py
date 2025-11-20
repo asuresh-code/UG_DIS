@@ -285,6 +285,17 @@ for b in range(10):
                     answer_end = string_tokens[answer_token_pos]
     end_success_rates.append(successes/len(generated_ids))
 
+    for x in range(10):
+        del image_inputs[x + b*10]
+        del video_inputs[x + b*10]
+        del grey_image_tensors[x + b*10]
+        del text[x + b*10]
+        del inputs[x]
+        del generated_ids[x]
+        del generated_ids_grad[x]
+        
+
+
 initial_successes = sum(start_success_rates)/len(start_success_rates)
 end_successess = sum(end_success_rates)/len(end_success_rates)
 
