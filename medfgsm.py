@@ -286,9 +286,9 @@ for b in range(10):
     end_success_rates.append(successes/len(generated_ids))
 
     for x in range(10):
-        del video_inputs[x + b*10]
-        del grey_image_tensors[x + b*10]
-        del text[x + b*10]
+        del video_inputs[x]
+        del grey_image_tensors[x]
+        del text[x]
         del inputs[x]
         del generated_ids[x]
         del generated_ids_grad[x]

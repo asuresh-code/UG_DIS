@@ -292,6 +292,8 @@ end_successess = sum(end_success_rates)/len(end_success_rates)
 orig_image = torch.div((lower_bound_budgets[incorrect_index] + upper_bound_budgets[incorrect_index]), 2)
 print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
 print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image_inputs[incorrect_index]))))
+print(torch.max(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
+
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
