@@ -167,10 +167,10 @@ for message in messages:
 
 for b in range(10):
     inputs = []
-    for x in range(10*b, 10*(b+1)):
+    for x in range(10):
         input = processor(
             text=text[x],
-            images=image_inputs[x],
+            images=image_inputs[x + b*10],
             videos=video_inputs[x],
             padding=True,
             return_tensors="pt",
@@ -223,21 +223,21 @@ for b in range(10):
         model.zero_grad()
         loss.backward()
 
-        signed_grad = torch.sign(grey_image_tensors[x + b*10].grad)
-        grey_image_tensors[x + b*10].grad = None
-        adv_image = grey_image_tensors[x + b*10].clone().detach() + signed_grad*total_budget
+        signed_grad = torch.sign(grey_image_tensors[x].grad)
+        grey_image_tensors[x].grad = None
+        adv_image = grey_image_tensors[x].clone().detach() + signed_grad*total_budget
 
         final_image = torch.clamp(adv_image, min=0, max=255)
-        grey_image_tensors[x + b*10] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        image_inputs[x + b*10] = grey_image_tensors[x + b*10].clone().repeat(3,1,1)
+        grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
+        image_inputs[x + b*10] = grey_image_tensors[x].clone().repeat(3,1,1)
 
     
     start_success_rates.append(successes/len(generated_ids))
 
-    for x in range(10*b, 10*(b+1)):
+    for x in range(10):
         input = processor(
             text=text[x],
-            images=image_inputs[x],
+            images=image_inputs[x + b*10],
             videos=video_inputs[x],
             padding=True,
             return_tensors="pt",
@@ -286,14 +286,12 @@ for b in range(10):
     end_success_rates.append(successes/len(generated_ids))
 
     for x in range(10):
-        del image_inputs[x + b*10]
         del video_inputs[x + b*10]
         del grey_image_tensors[x + b*10]
         del text[x + b*10]
         del inputs[x]
         del generated_ids[x]
         del generated_ids_grad[x]
-        
 
 
 initial_successes = sum(start_success_rates)/len(start_success_rates)
