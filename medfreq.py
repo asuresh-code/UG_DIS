@@ -138,6 +138,7 @@ text = [processor.apply_chat_template(message, tokenize=False, add_generation_pr
 
 frequency_image_tensors = []
 grey_image_tensors = []
+orig_image_inputs = []
 image_inputs = []
 video_inputs = []
 count = 0
@@ -169,6 +170,7 @@ for message in messages:
     image_tensor = grey_image_tensor.repeat(3,1,1)
     lower_bound_image_tensor = grey_image_tensor.clone().detach() - total_budget
     upper_bound_image_tensor = grey_image_tensor.clone().detach() + total_budget
+    orig_image_inputs.append(image_tensor.clone().detach())
     image_inputs.append(image_tensor)
     video_inputs.append(video_input)
     lower_bound_budgets.append(lower_bound_image_tensor)
@@ -292,7 +294,10 @@ print(torch.mean(torch.abs((grey_image_tensors[incorrect_index] - orig_image))))
 
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
-sv = img.save("freq" + questions[incorrect_index]["filename"])
+sv = img.save("freq2" + questions[incorrect_index]["filename"])
+
+img = transform(orig_image_inputs[incorrect_index].to(torch.uint8))
+sv = img.save("freq1" + questions[incorrect_index]["filename"])
 
 print("The initial overall success rate:", initial_successes)
 print("The end overall success rate:", end_successess)
