@@ -278,7 +278,11 @@ transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save(questions[incorrect_index]["filename"])
 
-
+ig = grey_image_tensors[incorrect_index] - orig_image
+ig = ig.repeat(3,1,1)
+y = torch.where(ig > 0, torch.tensor(255.0), torch.tensor(0.0))
+img = transform(y.to(torch.uint8))
+sv = img.save("pgdblur" + questions[incorrect_index]["filename"])
 
 
 print("The initial overall success rate:", initial_successes)

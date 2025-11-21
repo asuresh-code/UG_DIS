@@ -306,6 +306,12 @@ sv = img.save("freq2" + questions[incorrect_index]["filename"])
 img = transform(orig_image_inputs[incorrect_index].repeat(3,1,1).to(torch.uint8))
 sv = img.save("freq1" + questions[incorrect_index]["filename"])
 
+ig = grey_image_tensors[incorrect_index] - orig_image_inputs[incorrect_index]
+ig = ig.repeat(3,1,1)
+y = torch.where(ig > 0, torch.tensor(255.0), torch.tensor(0.0))
+img = transform(y.to(torch.uint8))
+sv = img.save("freqblur" + questions[incorrect_index]["filename"])
+
 print("The initial overall success rate:", initial_successes)
 print("The end overall success rate:", end_successess)
 print("Problem:", questions[incorrect_index]["problem"])
