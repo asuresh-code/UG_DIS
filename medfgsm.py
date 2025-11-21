@@ -239,6 +239,7 @@ for b in range(10):
 
     print(torch.cuda.memory_allocated())
     print(torch.cuda.memory_reserved())
+    gen_length = len(generated_ids)
     del loss
     del inputs
     del generated_ids_grad
@@ -246,7 +247,7 @@ for b in range(10):
     torch.cuda.empty_cache()
     print(torch.cuda.memory_allocated())
     print(torch.cuda.memory_reserved())
-    start_success_rates.append(successes/len(generated_ids))
+    start_success_rates.append(successes/gen_length)
 
     with torch.no_grad():
         for x in range(10):
@@ -299,7 +300,7 @@ for b in range(10):
                         logits_total_end = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
                         logits_max_end = max(logits_total_end)
                         answer_end = string_tokens[answer_token_pos]
-        end_success_rates.append(successes/len(generated_ids))
+        end_success_rates.append(successes/gen_length)
         print(torch.cuda.memory_allocated())
         print(torch.cuda.memory_reserved())
         if b != 9:
