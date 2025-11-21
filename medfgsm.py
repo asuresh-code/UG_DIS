@@ -307,7 +307,6 @@ for b in range(10):
         if b != 9:
             for x in range(10):
                 del video_inputs[0]
-                del grey_image_tensors[0]
                 del text[0]
                 del inputs[0]
                 del generated_ids[0]
@@ -323,6 +322,11 @@ end_successess = sum(end_success_rates)/len(end_success_rates)
 transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save("fgsm" + questions[incorrect_index]["filename"])
+
+ig = image_inputs[incorrect_index] - grey_image_tensors[incorrect_index]
+y = torch.where(ig > 0, torch.tensor(255.0), torch.tensor(0.0))
+img = transform(y.to(torch.uint8))
+sv = img.save("fgsmblur" + questions[incorrect_index]["filename"])
 
 print("The initial overall success rate:", initial_successes)
 print("The end overall success rate:", end_successess)
