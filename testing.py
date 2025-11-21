@@ -5,8 +5,8 @@ import numpy as np
 import os
 
 files_in_use = os.listdir(f"C:/Users/sures/Downloads/test")
-file1_in_use = "C:/Users/sures/Downloads/freq1mrabd023312.png"
-file2_in_use = "C:/Users/sures/Downloads/freq2mrabd023312.png"
+file1_in_use = "C:/Users/sures/Downloads/test/mrabd001359.png"
+file2_in_use = "C:/Users/sures/Downloads/IF-AFTER-mrabd001359.png"
 
 adv1_image = Image.open(file1_in_use)
 adv2_image = Image.open(file2_in_use)

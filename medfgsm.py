@@ -165,6 +165,9 @@ for message in messages:
     video_inputs.append(video_input)
     grey_image_tensors.append(grey_image_tensor)
 
+print(torch.cuda.memory_allocated())
+print(torch.cuda.memory_reserved())
+
 for b in range(10):
     inputs = []
     for x in range(10):
@@ -176,7 +179,8 @@ for b in range(10):
             return_tensors="pt",
         ).to("cuda")
         inputs.append(input)
-
+    print(torch.cuda.memory_allocated())
+    print(torch.cuda.memory_reserved())
     generated_ids = []
     generated_ids_grad = []
     for input in inputs:
@@ -189,6 +193,8 @@ for b in range(10):
         generated_ids.append(generated_id)
         generated_ids_grad.append(generated_id_grad)
 
+    print(torch.cuda.memory_allocated())
+    print(torch.cuda.memory_reserved())
     output_texts = []
     successes = 0
     for x in range(len(generated_ids)):
@@ -231,68 +237,82 @@ for b in range(10):
         grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
         image_inputs[x + b*10] = grey_image_tensors[x].clone().repeat(3,1,1)
 
-    
+    print(torch.cuda.memory_allocated())
+    print(torch.cuda.memory_reserved())
+    del loss
+    del inputs
+    del generated_ids_grad
+    del generated_ids
+    torch.cuda.empty_cache()
+    print(torch.cuda.memory_allocated())
+    print(torch.cuda.memory_reserved())
     start_success_rates.append(successes/len(generated_ids))
 
-    for x in range(10):
-        input = processor(
-            text=text[x],
-            images=image_inputs[x + b*10],
-            videos=video_inputs[x],
-            padding=True,
-            return_tensors="pt",
-        ).to("cuda")
-        inputs.append(input)
-
-    generated_ids = []
-    generated_ids_grad = []
-    for input in inputs:
-        generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
-        sequence = generated_id['sequences']
-        sequence.clone().detach()
-        sequence = sequence.to(device)
-        attention_mask = torch.ones_like(sequence)
-        generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
-        generated_ids.append(generated_id)
-        generated_ids_grad.append(generated_id_grad)
-
-    output_texts = []
-    successes = 0
-    for x in range(len(generated_ids)):
-        output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
-        output_texts.append(output_text)
-
-    for x in range(len(generated_ids)):
-        sequence = []
-        for token in generated_ids_grad[x]['logits'][0]:
-            sequence.append(token.argmax())
-        tokenizer = processor.tokenizer
-        string_tokens = tokenizer.convert_ids_to_tokens(sequence)
-        answer_token_pos = find_answer_token(string_tokens)
-        if answer_token_pos == -1:
-            continue
-        else:
-            actual_answer = questions[x + b*10]['solution']
-            if len(string_tokens[answer_token_pos]) > 1:
-                actual_answer = ">" + actual_answer
-            if actual_answer == string_tokens[answer_token_pos]:
-                successes += 1
-            else:
-                if incorrect_index is None and logits_was_true[x + b*10] is True:
-                    incorrect_index = x + b*10
-                    logits_total_end = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
-                    logits_max_end = max(logits_total_end)
-                    answer_end = string_tokens[answer_token_pos]
-    end_success_rates.append(successes/len(generated_ids))
-
-    if b != 9:
+    with torch.no_grad():
         for x in range(10):
-            del video_inputs[0]
-            del grey_image_tensors[0]
-            del text[0]
-            del inputs[0]
-            del generated_ids[0]
-            del generated_ids_grad[0]
+            input = processor(
+                text=text[x],
+                images=image_inputs[x + b*10],
+                videos=video_inputs[x],
+                padding=True,
+                return_tensors="pt",
+            ).to("cuda")
+            inputs.append(input)
+
+        generated_ids = []
+        generated_ids_grad = []
+        for input in inputs:
+            generated_id = model.generate(**input, use_cache=True, do_sample=False, generation_config=temp_generation_config, return_dict_in_generate=True, output_logits=True)
+            sequence = generated_id['sequences']
+            sequence.clone().detach()
+            sequence = sequence.to(device)
+            attention_mask = torch.ones_like(sequence)
+            generated_id_grad = model(input_ids=sequence, pixel_values=input['pixel_values'], attention_mask=attention_mask, image_grid_thw=input['image_grid_thw'])
+            generated_ids.append(generated_id)
+            generated_ids_grad.append(generated_id_grad)
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
+        output_texts = []
+        successes = 0
+        for x in range(len(generated_ids)):
+            output_text = processor.batch_decode(generated_ids[x][0], skip_special_tokens=True, clean_up_tokenization_spaces=False)
+            output_texts.append(output_text)
+
+        for x in range(len(generated_ids)):
+            sequence = []
+            for token in generated_ids_grad[x]['logits'][0]:
+                sequence.append(token.argmax())
+            tokenizer = processor.tokenizer
+            string_tokens = tokenizer.convert_ids_to_tokens(sequence)
+            answer_token_pos = find_answer_token(string_tokens)
+            if answer_token_pos == -1:
+                continue
+            else:
+                actual_answer = questions[x + b*10]['solution']
+                if len(string_tokens[answer_token_pos]) > 1:
+                    actual_answer = ">" + actual_answer
+                if actual_answer == string_tokens[answer_token_pos]:
+                    successes += 1
+                else:
+                    if incorrect_index is None and logits_was_true[x + b*10] is True:
+                        incorrect_index = x + b*10
+                        logits_total_end = m(generated_ids_grad[x]['logits'][0][answer_token_pos])
+                        logits_max_end = max(logits_total_end)
+                        answer_end = string_tokens[answer_token_pos]
+        end_success_rates.append(successes/len(generated_ids))
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
+        if b != 9:
+            for x in range(10):
+                del video_inputs[0]
+                del grey_image_tensors[0]
+                del text[0]
+                del inputs[0]
+                del generated_ids[0]
+                del generated_ids_grad[0]
+        torch.cuda.empty_cache()
+        print(torch.cuda.memory_allocated())
+        print(torch.cuda.memory_reserved())
 
 
 initial_successes = sum(start_success_rates)/len(start_success_rates)
