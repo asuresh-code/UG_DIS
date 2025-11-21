@@ -229,13 +229,13 @@ for b in range(10):
         model.zero_grad()
         loss.backward()
 
-        signed_grad = torch.sign(grey_image_tensors[x].grad)
-        grey_image_tensors[x].grad = None
-        adv_image = grey_image_tensors[x].clone().detach() + signed_grad*total_budget
+        signed_grad = torch.sign(grey_image_tensors[x + b*10].grad)
+        grey_image_tensors[x + b*10].grad = None
+        adv_image = grey_image_tensors[x + b*10].clone().detach() + signed_grad*total_budget
 
         final_image = torch.clamp(adv_image, min=0, max=255)
-        grey_image_tensors[x] = final_image.float().clone().detach().to(device).requires_grad_(True)
-        image_inputs[x + b*10] = grey_image_tensors[x].clone().repeat(3,1,1)
+        grey_image_tensors[x + b*10] = final_image.float().clone().detach().to(device).requires_grad_(True)
+        image_inputs[x + b*10] = grey_image_tensors[x + b*10].clone().repeat(3,1,1)
 
     print(torch.cuda.memory_allocated())
     print(torch.cuda.memory_reserved())
