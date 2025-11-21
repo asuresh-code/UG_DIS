@@ -250,6 +250,7 @@ for b in range(10):
     start_success_rates.append(successes/gen_length)
 
     with torch.no_grad():
+        inputs = []
         for x in range(10):
             input = processor(
                 text=text[x],
