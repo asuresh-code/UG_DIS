@@ -324,6 +324,7 @@ img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save("fgsm" + questions[incorrect_index]["filename"])
 
 ig = image_inputs[incorrect_index] - grey_image_tensors[incorrect_index]
+print(set(torch.flatten(ig).tolist()))
 y = torch.where(ig > 0, torch.tensor(255.0), torch.tensor(0.0))
 img = transform(y.to(torch.uint8))
 sv = img.save("fgsmblur" + questions[incorrect_index]["filename"])
