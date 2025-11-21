@@ -151,6 +151,7 @@ answer_end = ""
 incorrect_index = None
 start_success_rates = []
 end_success_rates = []
+orig_tensors = []
 
 for message in messages:
     count += 1
@@ -162,6 +163,8 @@ for message in messages:
     grey_image_tensor = grey_image_tensor.float().clone().detach().to(device).requires_grad_(True)
     image_tensor = grey_image_tensor.repeat(3,1,1)
     image_inputs.append(image_tensor)
+    orig_tensor = image_tensor.clone().detach()
+    orig_tensors.append(orig_tensor)
     video_inputs.append(video_input)
     grey_image_tensors.append(grey_image_tensor)
 
@@ -323,7 +326,7 @@ transform = transforms.ToPILImage()
 img = transform(image_inputs[incorrect_index].to(torch.uint8))
 sv = img.save("fgsm" + questions[incorrect_index]["filename"])
 
-ig = image_inputs[incorrect_index] - grey_image_tensors[incorrect_index]
+ig = image_inputs[incorrect_index] - orig_tensors[incorrect_index]
 print(set(torch.flatten(ig).tolist()))
 y = torch.where(ig > 0, torch.tensor(255.0), torch.tensor(0.0))
 img = transform(y.to(torch.uint8))
